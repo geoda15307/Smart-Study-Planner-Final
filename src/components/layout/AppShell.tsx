@@ -112,7 +112,7 @@ export function AppShell({ title, subtitle, children }: { title: string; subtitl
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-100 font-black text-primary-700">{user.name.slice(0, 1)}</div>
                 <div className="text-left">
                   <p className="text-sm font-bold text-slate-900">{user.name}</p>
-                  <p className="text-xs text-slate-400">Semester {user.semester}</p>
+                  <p className="text-xs text-slate-400">{user.email}</p>
                 </div>
               </Link>
               <button type="button" onClick={() => setMenuOpen(true)} className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-xl font-black text-slate-700 shadow-sm lg:hidden" aria-label="Buka menu">

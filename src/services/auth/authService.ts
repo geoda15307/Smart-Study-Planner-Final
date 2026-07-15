@@ -22,9 +22,6 @@ export async function register(input: {
   name: string;
   email: string;
   password: string;
-  university: string;
-  major: string;
-  semester: number;
 }) {
   await new Promise((resolve) => setTimeout(resolve, 500));
   if (!input.name.trim()) throw new Error("Nama tidak boleh kosong.");
@@ -35,9 +32,6 @@ export async function register(input: {
     id: `user_${Date.now()}`,
     name: input.name,
     email: input.email,
-    university: input.university || "Belum diisi",
-    major: input.major || "Belum diisi",
-    semester: input.semester,
     isPremium: false
   };
 

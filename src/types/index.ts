@@ -7,9 +7,6 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  university: string;
-  major: string;
-  semester: number;
   isPremium: boolean;
 }
 

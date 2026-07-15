@@ -12,9 +12,6 @@ export const demoUser: User = {
   id: "user_demo",
   name: "Mahasiswa Demo",
   email: "demo@student.com",
-  university: "Universitas Contoh",
-  major: "Informatika",
-  semester: 5,
   isPremium: false
 };
 

@@ -11,8 +11,8 @@ import { useAppStore } from "@/store/useAppStore";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const authenticate = useAppStore((state) => state.authenticate);
-  const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "", university: "", major: "", semester: 1 });
+  const logoutUser = useAppStore((state) => state.logoutUser);
+  const [form, setForm] = useState({ name: "", email: "", password: "", confirmPassword: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -21,9 +21,9 @@ export default function RegisterPage() {
     if (form.password !== form.confirmPassword) return setError("Konfirmasi password harus sama.");
     setLoading(true);
     try {
-      const result = await register(form);
-      authenticate(result.user, result.token);
-      router.replace("/onboarding");
+      await register(form);
+      logoutUser();
+      router.replace("/auth/login");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registrasi gagal.");
     } finally {
@@ -35,10 +35,9 @@ export default function RegisterPage() {
     <main className="flex min-h-screen items-center justify-center bg-soft px-4 py-8">
       <Card className="w-full max-w-2xl">
         <div className="flex items-center gap-3">
-          <Link href="/auth/login" className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-50 text-xl font-black text-slate-700">←</Link>
           <div>
             <h1 className="text-2xl font-black text-slate-900">Buat Akun Mahasiswa</h1>
-            <p className="mt-1 text-sm text-slate-500">Lengkapi data awal agar rekomendasi belajar lebih sesuai.</p>
+            <p className="mt-1 text-sm text-slate-500">Buat akun untuk mulai menggunakan aplikasi.</p>
           </div>
         </div>
         {error ? <p className="mt-5 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p> : null}
@@ -47,9 +46,6 @@ export default function RegisterPage() {
           <Field label="Email"><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field>
           <Field label="Password"><Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></Field>
           <Field label="Konfirmasi password"><Input type="password" value={form.confirmPassword} onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })} /></Field>
-          <Field label="Universitas"><Input value={form.university} onChange={(e) => setForm({ ...form, university: e.target.value })} /></Field>
-          <Field label="Jurusan"><Input value={form.major} onChange={(e) => setForm({ ...form, major: e.target.value })} /></Field>
-          <Field label="Semester"><Input type="number" min={1} value={form.semester} onChange={(e) => setForm({ ...form, semester: Number(e.target.value) })} /></Field>
         </div>
         <Button className="mt-6 w-full" disabled={loading} onClick={submit}>{loading ? "Membuat akun..." : "Daftar"}</Button>
         <p className="mt-6 text-center text-sm text-slate-500">Sudah punya akun? <Link href="/auth/login" className="font-bold text-primary-600">Login</Link></p>

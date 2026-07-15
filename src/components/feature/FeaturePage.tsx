@@ -129,11 +129,9 @@ export function AccountPage() {
           <span className="mt-4 inline-flex rounded-full bg-primary-50 px-4 py-2 text-sm font-bold text-primary-700">{user.isPremium ? "Premium" : "Free Plan"}</span>
         </Card>
         <Card>
-          <h3 className="text-lg font-black text-slate-900">Informasi Akademik</h3>
+          <h3 className="text-lg font-black text-slate-900">Informasi Akun</h3>
           <div className="mt-5 grid gap-3 md:grid-cols-2">
-            <Info label="Universitas" value={user.university} />
-            <Info label="Jurusan" value={user.major} />
-            <Info label="Semester" value={String(user.semester)} />
+            <Info label="Status" value={user.isPremium ? "Premium" : "Free Plan"} />
             <Info label="Google Drive" value="Belum terhubung" />
           </div>
           <div className="mt-6 flex flex-wrap gap-2">

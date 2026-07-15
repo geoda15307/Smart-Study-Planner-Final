@@ -28,6 +28,7 @@ type AppState = {
   completeTask: (taskId: string) => void;
   deleteTask: (taskId: string) => void;
   addCategory: (category: Category) => void;
+  updateCategory: (category: Category) => void;
   deleteCategory: (categoryId: string) => void;
   setStudySessions: (sessions: StudySession[]) => void;
   updatePreference: (updates: Partial<Preference>) => void;
@@ -72,6 +73,7 @@ export const useAppStore = create<AppState>()(
       })),
       deleteTask: (taskId) => set((state) => ({ tasks: state.tasks.filter((task) => task.id !== taskId) })),
       addCategory: (category) => set((state) => ({ categories: [category, ...state.categories] })),
+      updateCategory: (category) => set((state) => ({ categories: state.categories.map((item) => item.id === category.id ? category : item) })),
       deleteCategory: (categoryId) => set((state) => {
         const categories = state.categories.filter((category) => category.id !== categoryId);
         const fallback = categories.find((category) => category.id === "lainnya") ?? categories[0];

@@ -10,14 +10,53 @@ import { useAppStore } from "@/store/useAppStore";
 import { createId } from "@/utils/id";
 import { downloadCSV, downloadJSON } from "@/services/storage/storageService";
 import { logout as clearAuthToken } from "@/services/auth/authService";
+import { CategoryIcon } from "@/components/category/CategoryIcon";
+
+const ICON_CHOICES = [
+  { name: "book-open", label: "Book Open" },
+  { name: "graduation-cap", label: "Graduation Cap" },
+  { name: "file-text", label: "File Text" },
+  { name: "clipboard-list", label: "Clipboard List" },
+  { name: "users", label: "Users" },
+  { name: "activity", label: "Activity" },
+  { name: "sport-shoe", label: "Running" },
+  { name: "gift", label: "Gift" },
+  { name: "sparkles", label: "Sparkles" },
+  { name: "coffee", label: "Coffee" },
+  { name: "calendar", label: "Calendar" },
+  { name: "clock", label: "Clock" },
+  { name: "star", label: "Star" },
+  { name: "pencil", label: "Pencil" },
+  { name: "monitor", label: "Monitor" },
+  { name: "inbox", label: "Inbox" },
+  { name: "music", label: "Music" },
+  { name: "heart", label: "Heart" },
+  { name: "rocket", label: "Rocket" },
+  { name: "shield", label: "Shield" }
+];
 
 export function CategoryPage() {
   const categories = useAppStore((state) => state.categories);
   const addCategory = useAppStore((state) => state.addCategory);
+  const updateCategory = useAppStore((state) => state.updateCategory);
   const deleteCategory = useAppStore((state) => state.deleteCategory);
   const [name, setName] = useState("");
-  const [icon, setIcon] = useState("📌");
+  const [selectedIcon, setSelectedIcon] = useState("book-open");
   const [color, setColor] = useState("#2563eb");
+  const [activityInput, setActivityInput] = useState("");
+  const [activitiesList, setActivitiesList] = useState<string[]>([]);
+  const [iconSearch, setIconSearch] = useState("");
+
+  function addActivity() {
+    const next = activityInput.trim();
+    if (!next) return;
+    setActivitiesList((current) => Array.from(new Set([...current, next])));
+    setActivityInput("");
+  }
+
+  function removeActivity(activity: string) {
+    setActivitiesList((current) => current.filter((item) => item !== activity));
+  }
 
   return (
     <AppShell title="Category" subtitle="Kelompokkan aktivitas dengan warna dan icon.">
@@ -26,12 +65,66 @@ export function CategoryPage() {
           <h2 className="text-lg font-black text-slate-900">Tambah Kategori</h2>
           <div className="mt-4 space-y-4">
             <Field label="Nama kategori"><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Contoh: Project Kelompok" /></Field>
-            <Field label="Icon"><Input value={icon} onChange={(e) => setIcon(e.target.value)} /></Field>
+            <Field label="Aktivitas"><div className="grid gap-3">
+              <div className="flex gap-2">
+                <Input value={activityInput} onChange={(e) => setActivityInput(e.target.value)} placeholder="Contoh: renang" />
+                <Button type="button" variant="secondary" className="min-w-[3rem]" onClick={addActivity}>+</Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {activitiesList.length
+                  ? activitiesList.map((activity) => (
+                    <span key={activity} className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700">
+                      {activity}
+                      <button type="button" onClick={() => removeActivity(activity)} className="rounded-full px-1 text-slate-400 transition hover:text-slate-700">×</button>
+                    </span>
+                  ))
+                  : <p className="text-sm text-slate-500">Belum ada aktivitas ditambahkan.</p>
+                }
+              </div>
+              <div className="flex justify-end">
+                <Button type="button" variant="secondary" className="h-10 w-10 rounded-full p-0" onClick={addActivity}>+</Button>
+              </div>
+            </div></Field>
+            <Field label="Icon">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-3 shadow-sm shadow-slate-200/10">
+                  <input
+                    className="h-10 flex-1 rounded-2xl border-none bg-transparent px-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-0"
+                    value={iconSearch}
+                    onChange={(e) => setIconSearch(e.target.value)}
+                    placeholder="Cari icon..."
+                  />
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-900">
+                    <CategoryIcon category={{ id: "preview", name: "Preview", color, icon: selectedIcon, activities: [] }} className="h-6 w-6" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-5 gap-2 sm:grid-cols-5">
+                  {ICON_CHOICES.filter((item) => item.label.toLowerCase().includes(iconSearch.toLowerCase()) || item.name.includes(iconSearch.toLowerCase())).map((item) => {
+                    const selected = selectedIcon === item.name;
+                    return (
+                      <button
+                        key={item.name}
+                        type="button"
+                        onClick={() => setSelectedIcon(item.name)}
+                        className={`relative flex h-14 w-14 items-center justify-center rounded-2xl border bg-white transition ${selected ? "border-emerald-400 bg-emerald-50" : "border-slate-200 hover:border-slate-300"}`}
+                      >
+                        <CategoryIcon category={{ id: `pick-${item.name}`, name: item.label, color: "#0f172a", icon: item.name, activities: [] }} className="h-6 w-6" />
+                        {selected ? (
+                          <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white">✓</span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </Field>
             <Field label="Warna"><Input type="color" value={color} onChange={(e) => setColor(e.target.value)} /></Field>
             <Button className="w-full" onClick={() => {
               if (!name.trim()) return;
-              addCategory({ id: createId("cat"), name, icon, color });
+              addCategory({ id: createId("cat"), name, icon: selectedIcon, color, activities: activitiesList });
               setName("");
+              setActivityInput("");
+              setActivitiesList([]);
             }}>Simpan Kategori</Button>
           </div>
         </Card>
@@ -40,10 +133,17 @@ export function CategoryPage() {
             <Card key={category.id} className="p-4">
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl text-xl" style={{ backgroundColor: `${category.color}20`, color: category.color }}>{category.icon}</div>
-                  <div><p className="font-black text-slate-900">{category.name}</p><p className="text-xs text-slate-400">{category.color}</p></div>
+                  <CategoryIcon category={category} className="h-12 w-12" />
+                  <div>
+                    <p className="font-black text-slate-900">{category.name}</p>
+                    <p className="text-xs text-slate-400">{category.color}</p>
+                  </div>
                 </div>
                 <Button variant="danger" onClick={() => deleteCategory(category.id)}>Hapus</Button>
+              </div>
+              <div className="mt-4 text-sm text-slate-600">
+                <p className="font-black text-slate-900">Aktivitas</p>
+                <p className="mt-1 text-sm text-slate-500">{Array.isArray(category.activities) && category.activities.length ? category.activities.join(", ") : "-"}</p>
               </div>
             </Card>
           ))}

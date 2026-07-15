@@ -14,15 +14,16 @@ import { nowISO, todayISO } from "@/utils/date";
 
 export function TaskForm() {
   const router = useRouter();
-  const courses = useAppStore((state) => state.courses);
   const categories = useAppStore((state) => state.categories);
   const addTask = useAppStore((state) => state.addTask);
   const updateTask = useAppStore((state) => state.updateTask);
+  const defaultCategory = categories[1] ?? categories[0];
+  const defaultActivity = Array.isArray(defaultCategory?.activities) && defaultCategory.activities.length ? defaultCategory.activities[0] : "-";
   const [form, setForm] = useState<TaskInput>({
     title: "",
     description: "",
-    courseId: courses[0]?.id ?? "",
-    categoryId: categories[1]?.id ?? "",
+    activity: defaultActivity,
+    categoryId: defaultCategory?.id ?? "",
     deadlineDate: todayISO(),
     deadlineTime: "23:59",
     priority: "Medium",
@@ -53,18 +54,32 @@ export function TaskForm() {
     setValue("subtasks", form.subtasks.filter((item) => item.id !== id));
   }
 
+  const selectedCategory = categories.find((item) => item.id === form.categoryId) ?? categories[0];
+  const activityOptions = Array.isArray(selectedCategory?.activities) && selectedCategory.activities.length ? selectedCategory.activities : ["-"];
+
+  function handleCategoryChange(categoryId: string) {
+    const category = categories.find((item) => item.id === categoryId);
+    const firstActivity = Array.isArray(category?.activities) && category.activities.length ? category.activities[0] : "-";
+
+    setForm((current) => ({
+      ...current,
+      categoryId,
+      activity: firstActivity
+    }));
+  }
+
   async function save(withAI = false) {
     if (!form.title.trim()) return setError("Judul tugas wajib diisi.");
     if (!form.deadlineDate) return setError("Deadline wajib diisi.");
     if (Number(form.estimatedDurationMinutes) <= 0) return setError("Estimasi durasi harus angka positif.");
 
     setError("");
-    const course = courses.find((item) => item.id === form.courseId) ?? courses[0];
+    const activityName = form.activity || (selectedCategory?.activities[0] ?? "-");
     const task = {
       id: createId("task"),
       title: form.title,
-      courseId: course.id,
-      courseName: course.name,
+      courseId: activityName,
+      courseName: activityName,
       categoryId: form.categoryId,
       description: form.description,
       deadlineDate: form.deadlineDate,
@@ -108,8 +123,8 @@ export function TaskForm() {
 
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         <Field label="Judul aktivitas/tugas"><Input value={form.title} onChange={(e) => setValue("title", e.target.value)} placeholder="Contoh: Laporan Praktikum Basis Data" /></Field>
-        <Field label="Mata kuliah"><Select value={form.courseId} onChange={(e) => setValue("courseId", e.target.value)}>{courses.map((course) => <option key={course.id} value={course.id}>{course.name}</option>)}</Select></Field>
-        <Field label="Kategori"><Select value={form.categoryId} onChange={(e) => setValue("categoryId", e.target.value)}>{categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>)}</Select></Field>
+        <Field label="Aktivitas"><Select value={form.activity} onChange={(e) => setValue("activity", e.target.value)}>{activityOptions.map((activity) => <option key={activity} value={activity}>{activity}</option>)}</Select></Field>
+        <Field label="Kategori"><Select value={form.categoryId} onChange={(e) => handleCategoryChange(e.target.value)}>{categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}</Select></Field>
         <Field label="Deadline tanggal"><Input type="date" value={form.deadlineDate} onChange={(e) => setValue("deadlineDate", e.target.value)} /></Field>
         <Field label="Deadline jam"><Input type="time" value={form.deadlineTime} onChange={(e) => setValue("deadlineTime", e.target.value)} /></Field>
         <Field label="Estimasi durasi (menit)"><Input type="number" min={15} value={form.estimatedDurationMinutes} onChange={(e) => setValue("estimatedDurationMinutes", Number(e.target.value))} /></Field>

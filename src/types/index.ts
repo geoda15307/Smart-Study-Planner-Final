@@ -25,6 +25,7 @@ export interface Category {
   name: string;
   color: string;
   icon: string;
+  activities: string[];
 }
 
 export interface Subtask {
@@ -129,7 +130,7 @@ export interface ChatMessage {
 export interface TaskInput {
   title: string;
   description: string;
-  courseId: string;
+  activity: string;
   categoryId: string;
   deadlineDate: string;
   deadlineTime: string;

@@ -27,15 +27,15 @@ export const courses: Course[] = [
 ];
 
 export const categories: Category[] = [
-  { id: "kuliah", name: "Kuliah", color: "#2563eb", icon: "🎓" },
-  { id: "tugas", name: "Tugas", color: "#ef4444", icon: "📝" },
-  { id: "belajar", name: "Belajar", color: "#7c3aed", icon: "📚" },
-  { id: "ujian", name: "Ujian", color: "#f59e0b", icon: "🧠" },
-  { id: "organisasi", name: "Organisasi", color: "#0ea5e9", icon: "🤝" },
-  { id: "exercise", name: "Exercise", color: "#22c55e", icon: "🏃" },
-  { id: "birthday", name: "Birthday", color: "#ec4899", icon: "🎂" },
-  { id: "personal", name: "Personal", color: "#64748b", icon: "🌿" },
-  { id: "lainnya", name: "Lainnya", color: "#475569", icon: "✨" }
+  { id: "kuliah", name: "Kuliah", color: "#2563eb", icon: "graduation-cap", activities: ["Pemrograman Web", "Android Development"] },
+  { id: "tugas", name: "Tugas", color: "#ef4444", icon: "file-text", activities: ["Laporan", "Presentasi"] },
+  { id: "belajar", name: "Belajar", color: "#7c3aed", icon: "book-open", activities: ["Belajar Mandiri"] },
+  { id: "ujian", name: "Ujian", color: "#f59e0b", icon: "brain", activities: ["Quiz", "Ujian Akhir"] },
+  { id: "organisasi", name: "Organisasi", color: "#0ea5e9", icon: "users", activities: ["Rapat Organisasi"] },
+  { id: "exercise", name: "Exercise", color: "#22c55e", icon: "sport-shoe", activities: ["Renang", "Joging"] },
+  { id: "birthday", name: "Birthday", color: "#ec4899", icon: "gift", activities: ["Rayakan Ulang Tahun"] },
+  { id: "personal", name: "Personal", color: "#64748b", icon: "leaf", activities: ["Self-care"] },
+  { id: "lainnya", name: "Lainnya", color: "#475569", icon: "sparkles", activities: [] }
 ];
 
 const baseTasks: Omit<Task, "priorityScore">[] = [

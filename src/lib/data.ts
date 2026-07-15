@@ -74,7 +74,7 @@ const baseTasks: Omit<Task, "priorityScore">[] = [
     priority: "High",
     difficulty: "Medium",
     estimatedDurationMinutes: 180,
-    status: "Sedang Dikerjakan",
+    status: "Belum Mulai",
     tags: ["presentasi", "ai"],
     subtasks: [
       { id: "sub_ai_1", title: "Buat outline slide", completed: true },
@@ -116,7 +116,7 @@ const baseTasks: Omit<Task, "priorityScore">[] = [
     priority: "Medium",
     difficulty: "Medium",
     estimatedDurationMinutes: 120,
-    status: "Menunggu Review",
+    status: "Belum Mulai",
     tags: ["figma", "ui"],
     subtasks: [
       { id: "sub_hci_1", title: "Wireframe dashboard", completed: true },

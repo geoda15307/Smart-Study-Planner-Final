@@ -1,6 +1,6 @@
 export type Priority = "Low" | "Medium" | "High" | "Urgent";
 export type Difficulty = "Easy" | "Medium" | "Hard";
-export type TaskStatus = "Belum Mulai" | "Sedang Dikerjakan" | "Menunggu Review" | "Selesai" | "Terlambat";
+export type TaskStatus = "Belum Mulai" | "Selesai" | "Terlambat";
 export type ProductiveTime = "Pagi" | "Siang" | "Sore" | "Malam";
 
 export interface User {

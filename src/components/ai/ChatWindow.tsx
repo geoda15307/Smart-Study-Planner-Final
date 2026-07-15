@@ -63,11 +63,11 @@ export function ChatWindow() {
       <div className="mt-5 flex-1 space-y-3 overflow-y-auto rounded-2xl bg-slate-50 p-3">
         {messages.length === 0 ? <p className="p-6 text-center text-sm text-slate-500">Belum ada percakapan.</p> : null}
         {messages.map((message) => (
-          <div key={message.id} className={message.role === "user" ? "ml-auto max-w-[85%] rounded-2xl bg-primary-600 p-3 text-sm text-white" : "mr-auto max-w-[85%] whitespace-pre-line rounded-2xl bg-white p-3 text-sm leading-6 text-slate-700 shadow-sm"}>
+          <div key={message.id} className={message.role === "user" ? "ml-auto max-w-[85%] rounded-2xl bg-primary-600 p-3 text-sm text-white" : "mr-auto max-w-[85%] whitespace-pre-line rounded-2xl bg-surface p-3 text-sm leading-6 text-slate-700 shadow-sm"}>
             {message.content}
           </div>
         ))}
-        {loading ? <div className="mr-auto max-w-[85%] rounded-2xl bg-white p-3 text-sm text-slate-500 shadow-sm">AI sedang mengetik...</div> : null}
+        {loading ? <div className="mr-auto max-w-[85%] rounded-2xl bg-surface p-3 text-sm text-slate-500 shadow-sm">AI sedang mengetik...</div> : null}
       </div>
 
       {error ? <p className="mt-3 rounded-2xl bg-red-50 p-3 text-sm font-bold text-red-700">{error}</p> : null}

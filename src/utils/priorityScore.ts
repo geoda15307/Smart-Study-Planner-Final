@@ -5,8 +5,6 @@ const priorityMap: Record<Priority, number> = { Low: 20, Medium: 50, High: 75, U
 const difficultyMap: Record<Difficulty, number> = { Easy: 25, Medium: 60, Hard: 100 };
 const statusMap: Record<TaskStatus, number> = {
   "Belum Mulai": 90,
-  "Sedang Dikerjakan": 55,
-  "Menunggu Review": 30,
   "Selesai": 0,
   "Terlambat": 100
 };

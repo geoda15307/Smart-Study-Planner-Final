@@ -45,6 +45,14 @@ export function TaskForm() {
     setSubtask("");
   }
 
+  function updateSubtask(id: string, updates: Partial<Subtask>) {
+    setValue("subtasks", form.subtasks.map((item) => item.id === id ? { ...item, ...updates } : item));
+  }
+
+  function removeSubtask(id: string) {
+    setValue("subtasks", form.subtasks.filter((item) => item.id !== id));
+  }
+
   async function save(withAI = false) {
     if (!form.title.trim()) return setError("Judul tugas wajib diisi.");
     if (!form.deadlineDate) return setError("Deadline wajib diisi.");
@@ -115,13 +123,29 @@ export function TaskForm() {
       </div>
 
       <div className="mt-4 rounded-2xl bg-slate-50 p-4">
-        <p className="text-sm font-black text-slate-800">Subtask checklist</p>
+        <p className="text-sm font-black text-slate-900">Subtask checklist</p>
         <div className="mt-3 flex gap-2">
-          <Input value={subtask} onChange={(e) => setSubtask(e.target.value)} placeholder="Contoh: Buat outline laporan" />
+          <Input value={subtask} onChange={(e) => setSubtask(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSubtask(); } }} placeholder="Contoh: Buat outline laporan" />
           <Button type="button" variant="secondary" onClick={addSubtask}>Tambah</Button>
         </div>
         <div className="mt-3 space-y-2">
-          {form.subtasks.map((item) => <div key={item.id} className="rounded-xl bg-white px-3 py-2 text-sm text-slate-600">• {item.title}</div>)}
+          {form.subtasks.length ? form.subtasks.map((item) => (
+            <div key={item.id} className="flex items-center gap-2 rounded-xl bg-surface px-3 py-2">
+              <input
+                type="checkbox"
+                checked={item.completed}
+                onChange={(e) => updateSubtask(item.id, { completed: e.target.checked })}
+                className="focus-ring h-4 w-4 shrink-0 rounded border-slate-300 text-primary-600"
+                aria-label={`Tandai "${item.title}" selesai`}
+              />
+              <input
+                value={item.title}
+                onChange={(e) => updateSubtask(item.id, { title: e.target.value })}
+                className={`focus-ring min-w-0 flex-1 rounded-lg border-none bg-transparent px-1 text-sm ${item.completed ? "text-slate-400 line-through" : "text-slate-600"}`}
+              />
+              <button type="button" onClick={() => removeSubtask(item.id)} className="shrink-0 rounded-lg px-2 py-1 text-xs font-bold text-red-600 hover:bg-red-50" aria-label={`Hapus "${item.title}"`}>Hapus</button>
+            </div>
+          )) : <p className="text-sm text-slate-500">Belum ada subtask.</p>}
         </div>
       </div>
 

@@ -11,13 +11,13 @@ export function Field({ label, children, error }: { label: string; children: Rea
 }
 
 export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={`focus-ring w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm ${props.className ?? ""}`} />;
+  return <input {...props} className={`focus-ring w-full rounded-2xl border border-slate-200 bg-surface px-4 py-3 text-sm ${props.className ?? ""}`} />;
 }
 
 export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea {...props} className={`focus-ring min-h-28 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm ${props.className ?? ""}`} />;
+  return <textarea {...props} className={`focus-ring min-h-28 w-full rounded-2xl border border-slate-200 bg-surface px-4 py-3 text-sm ${props.className ?? ""}`} />;
 }
 
 export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select {...props} className={`focus-ring w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm ${props.className ?? ""}`} />;
+  return <select {...props} className={`focus-ring w-full rounded-2xl border border-slate-200 bg-surface px-4 py-3 text-sm ${props.className ?? ""}`} />;
 }

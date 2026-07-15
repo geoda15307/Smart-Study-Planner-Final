@@ -31,7 +31,7 @@ export default function DashboardPage() {
               <p className="mt-2 max-w-2xl text-sm text-blue-50">Kamu punya <b>{activeTasks.filter((task) => task.priorityScore >= 70).length}</b> tugas penting. Mulai dari prioritas tertinggi agar deadline tetap aman.</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Link href="/tasks/new"><Button variant="secondary" className="bg-white">Tambah Tugas</Button></Link>
+              <Link href="/tasks/new"><Button variant="secondary" className="bg-surface">Tambah Tugas</Button></Link>
               <Link href="/ai-assistant"><Button className="bg-slate-950 hover:bg-slate-800">Buka AI</Button></Link>
             </div>
           </div>
@@ -56,7 +56,7 @@ export default function DashboardPage() {
           </Card>
 
           <div className="space-y-5">
-            <Card className="border-primary-100 bg-gradient-to-br from-white to-primary-50">
+            <Card className="border-primary-100 bg-gradient-to-br from-surface to-primary-50">
               <h3 className="font-black text-slate-900">Rekomendasi AI Hari Ini</h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">{topTask ? `Mulai dari “${topTask.title}” karena priority score-nya ${topTask.priorityScore}/100.` : "Tidak ada tugas aktif."}</p>
               <p className="mt-3 text-xs text-slate-400">Rekomendasi AI dapat disesuaikan kembali oleh pengguna.</p>

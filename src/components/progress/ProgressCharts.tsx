@@ -5,7 +5,7 @@ import type { Task } from "@/types";
 import { Card } from "@/components/common/Card";
 
 export function ProgressCharts({ tasks }: { tasks: Task[] }) {
-  const statusData = ["Belum Mulai", "Sedang Dikerjakan", "Menunggu Review", "Selesai", "Terlambat"].map((status) => ({
+  const statusData = ["Belum Mulai", "Selesai", "Terlambat"].map((status) => ({
     name: status,
     value: tasks.filter((task) => task.status === status).length
   }));
@@ -28,7 +28,7 @@ export function ProgressCharts({ tasks }: { tasks: Task[] }) {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={statusData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90} paddingAngle={4}>
-                {statusData.map((entry, index) => <Cell key={entry.name} fill={["#94a3b8", "#3b82f6", "#a855f7", "#22c55e", "#ef4444"][index]} />)}
+                {statusData.map((entry, index) => <Cell key={entry.name} fill={["#94a3b8", "#22c55e", "#ef4444"][index]} />)}
               </Pie>
               <Tooltip />
             </PieChart>

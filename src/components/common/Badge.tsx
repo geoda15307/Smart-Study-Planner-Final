@@ -9,8 +9,6 @@ const priorityClass: Record<Priority, string> = {
 
 const statusClass: Record<TaskStatus, string> = {
   "Belum Mulai": "bg-slate-100 text-slate-700",
-  "Sedang Dikerjakan": "bg-blue-50 text-blue-700",
-  "Menunggu Review": "bg-purple-50 text-purple-700",
   "Selesai": "bg-emerald-50 text-emerald-700",
   "Terlambat": "bg-red-50 text-red-700"
 };

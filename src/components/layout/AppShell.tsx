@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
 import { useAppStore } from "@/store/useAppStore";
+import { useTheme } from "@/hooks/useTheme";
 
 const appRoutes = [
   ["Dashboard", "/dashboard", "🏠"],
@@ -41,6 +42,8 @@ export function AppShell({ title, subtitle, children }: { title: string; subtitl
   const [hydrated, setHydrated] = useState(false);
   const showBackButton = pathname !== "/dashboard";
 
+  useTheme();
+
   useEffect(() => {
     setHydrated(useAppStore.persist.hasHydrated());
     const unsub = useAppStore.persist.onFinishHydration(() => setHydrated(true));
@@ -60,7 +63,7 @@ export function AppShell({ title, subtitle, children }: { title: string; subtitl
   if (!hydrated || !isAuthenticated) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-soft px-4">
-        <div className="rounded-card bg-white p-6 text-center shadow-soft">
+        <div className="rounded-card bg-surface p-6 text-center shadow-soft">
           <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-primary-100 border-t-primary-600" />
           <p className="mt-4 text-sm font-bold text-slate-600">Memeriksa sesi login...</p>
         </div>
@@ -70,7 +73,7 @@ export function AppShell({ title, subtitle, children }: { title: string; subtitl
 
   return (
     <div className="min-h-screen bg-soft">
-      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-72 border-r border-slate-100 bg-white px-5 py-6 lg:block">
+      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-72 border-r border-slate-100 bg-surface px-5 py-6 lg:block">
         <Link href="/dashboard" className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-600 text-xl font-black text-white">S</div>
           <div>
@@ -96,7 +99,7 @@ export function AppShell({ title, subtitle, children }: { title: string; subtitl
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
               {showBackButton ? (
-                <button type="button" onClick={() => router.back()} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-xl font-black text-slate-700 shadow-sm lg:hidden" aria-label="Kembali">
+                <button type="button" onClick={() => router.back()} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-surface text-xl font-black text-slate-700 shadow-sm lg:hidden" aria-label="Kembali">
                   ←
                 </button>
               ) : null}
@@ -108,14 +111,14 @@ export function AppShell({ title, subtitle, children }: { title: string; subtitl
             </div>
 
             <div className="flex items-center gap-2">
-              <Link href="/account" className="hidden items-center gap-3 rounded-2xl bg-white px-3 py-2 shadow-sm sm:flex">
+              <Link href="/account" className="hidden items-center gap-3 rounded-2xl bg-surface px-3 py-2 shadow-sm sm:flex">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary-100 font-black text-primary-700">{user.name.slice(0, 1)}</div>
                 <div className="text-left">
                   <p className="text-sm font-bold text-slate-900">{user.name}</p>
                   <p className="text-xs text-slate-400">Semester {user.semester}</p>
                 </div>
               </Link>
-              <button type="button" onClick={() => setMenuOpen(true)} className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-xl font-black text-slate-700 shadow-sm lg:hidden" aria-label="Buka menu">
+              <button type="button" onClick={() => setMenuOpen(true)} className="flex h-10 w-10 items-center justify-center rounded-2xl bg-surface text-xl font-black text-slate-700 shadow-sm lg:hidden" aria-label="Buka menu">
                 ☰
               </button>
             </div>
@@ -125,7 +128,7 @@ export function AppShell({ title, subtitle, children }: { title: string; subtitl
         <main className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 lg:px-8">{children}</main>
       </div>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-100 bg-white/95 px-3 py-2 backdrop-blur lg:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-100 bg-surface/95 px-3 py-2 backdrop-blur lg:hidden">
         <div className="mx-auto grid max-w-md grid-cols-5 gap-1">
           {mobileQuickRoutes.map(([label, href, icon]) => {
             if (href === "#menu") {
@@ -148,7 +151,7 @@ export function AppShell({ title, subtitle, children }: { title: string; subtitl
       {menuOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden">
           <button type="button" aria-label="Tutup menu" className="absolute inset-0 bg-slate-950/40" onClick={() => setMenuOpen(false)} />
-          <aside className="absolute right-0 top-0 h-full w-[86%] max-w-sm overflow-y-auto rounded-l-[2rem] bg-white px-5 py-6 shadow-2xl">
+          <aside className="absolute right-0 top-0 h-full w-[86%] max-w-sm overflow-y-auto rounded-l-[2rem] bg-surface px-5 py-6 shadow-2xl">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-600 text-lg font-black text-white">S</div>

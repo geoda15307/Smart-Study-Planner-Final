@@ -44,7 +44,7 @@ export function CalendarView({ tasks }: { tasks: Task[] }) {
             const items = tasks.filter((task) => isSameDay(new Date(task.deadlineDate), day));
             const active = isSameDay(day, selected);
             return (
-              <button key={day.toISOString()} onClick={() => setSelected(day)} className={`min-h-20 rounded-2xl border p-2 text-left transition ${active ? "border-primary-500 bg-primary-50" : "border-slate-100 bg-white"} ${!isSameMonth(day, month) ? "opacity-40" : ""}`}>
+              <button key={day.toISOString()} onClick={() => setSelected(day)} className={`min-h-20 rounded-2xl border p-2 text-left transition ${active ? "border-primary-500 bg-primary-50" : "border-slate-100 bg-surface"} ${!isSameMonth(day, month) ? "opacity-40" : ""}`}>
                 <span className="text-sm font-black text-slate-700">{day.getDate()}</span>
                 <div className="mt-2 flex flex-wrap gap-1">
                   {items.slice(0, 4).map((task) => <span key={task.id} className={`h-2 w-2 rounded-full ${dot[task.priority]}`} />)}

@@ -18,7 +18,7 @@ export default function TasksPage() {
     <AppShell title="Task Manager" subtitle="Kelola tugas akademik, deadline, priority score, dan analisis AI.">
       <div className="space-y-5">
         <div className="flex justify-end"><Link href="/tasks/new"><Button>Tambah Tugas</Button></Link></div>
-        <div className="grid gap-3 rounded-card border border-slate-100 bg-white p-4 shadow-soft md:grid-cols-4">
+        <div className="grid gap-3 rounded-card border border-slate-100 bg-surface p-4 shadow-soft md:grid-cols-4">
           <Input placeholder="Cari tugas..." value={filter.search} onChange={(e) => filter.setSearch(e.target.value)} />
           <Select value={filter.range} onChange={(e) => filter.setRange(e.target.value as typeof filter.range)}>
             {["Semua", "Hari ini", "Minggu ini", "Bulan ini"].map((item) => <option key={item}>{item}</option>)}
@@ -27,7 +27,7 @@ export default function TasksPage() {
             {["Semua", "Low", "Medium", "High", "Urgent"].map((item) => <option key={item}>{item}</option>)}
           </Select>
           <Select value={filter.status} onChange={(e) => filter.setStatus(e.target.value as typeof filter.status)}>
-            {["Semua", "Belum Mulai", "Sedang Dikerjakan", "Menunggu Review", "Selesai", "Terlambat"].map((item) => <option key={item}>{item}</option>)}
+            {["Semua", "Belum Mulai", "Selesai", "Terlambat"].map((item) => <option key={item}>{item}</option>)}
           </Select>
         </div>
 

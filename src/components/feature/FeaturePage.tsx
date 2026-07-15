@@ -193,7 +193,7 @@ export function PremiumPage() {
 
 function Plan({ title, price, features, highlighted }: { title: string; price: string; features: string[]; highlighted?: boolean }) {
   return (
-    <Card className={highlighted ? "border-primary-200 bg-gradient-to-br from-white to-primary-50" : ""}>
+    <Card className={highlighted ? "border-primary-200 bg-gradient-to-br from-surface to-primary-50" : ""}>
       <h2 className="text-2xl font-black text-slate-900">{title}</h2>
       <p className="mt-3 text-3xl font-black text-primary-700">{price}</p>
       <ul className="mt-5 space-y-3 text-sm text-slate-600">{features.map((feature) => <li key={feature}>✅ {feature}</li>)}</ul>
@@ -217,12 +217,15 @@ export function SettingsPage() {
             <Field label="Bahasa aplikasi"><Select value={preference.language} onChange={(e) => updatePreference({ language: e.target.value as "id" | "en" })}><option value="id">Bahasa Indonesia</option><option value="en">English</option></Select></Field>
             <Field label="Jam produktif"><Select value={preference.productiveTime} onChange={(e) => updatePreference({ productiveTime: e.target.value as typeof preference.productiveTime })}>{["Pagi", "Siang", "Sore", "Malam"].map((item) => <option key={item}>{item}</option>)}</Select></Field>
             <Field label="Maksimal jam belajar per hari"><Input type="number" value={preference.maxStudyHoursPerDay} onChange={(e) => updatePreference({ maxStudyHoursPerDay: Number(e.target.value) })} /></Field>
+            <button type="button" onClick={() => updatePreference({ darkMode: !preference.darkMode })} className="flex w-full items-center justify-between rounded-2xl bg-slate-50 p-4 text-left text-sm font-bold text-slate-900">
+              <span>Mode gelap</span><span>{preference.darkMode ? "Aktif" : "Nonaktif"}</span>
+            </button>
           </div>
         </Card>
         <Card>
           <h2 className="text-lg font-black text-slate-900">Backup & AI</h2>
           <div className="mt-4 space-y-3">
-            <button onClick={() => updatePreference({ aiEnabled: !preference.aiEnabled })} className="flex w-full items-center justify-between rounded-2xl bg-slate-50 p-4 text-left text-sm font-bold text-slate-800">
+            <button onClick={() => updatePreference({ aiEnabled: !preference.aiEnabled })} className="flex w-full items-center justify-between rounded-2xl bg-slate-50 p-4 text-left text-sm font-bold text-slate-900">
               <span>Aktifkan AI recommendation</span><span>{preference.aiEnabled ? "Aktif" : "Nonaktif"}</span>
             </button>
             <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">Data tugas Anda hanya digunakan untuk menghasilkan rekomendasi belajar dan tidak akan dibagikan tanpa izin.</p>

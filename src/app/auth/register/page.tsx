@@ -35,7 +35,6 @@ export default function RegisterPage() {
     <main className="flex min-h-screen items-center justify-center bg-soft px-4 py-8">
       <Card className="w-full max-w-2xl">
         <div className="flex items-center gap-3">
-          <Link href="/auth/login" className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-50 text-xl font-black text-slate-700">←</Link>
           <div>
             <h1 className="text-2xl font-black text-slate-900">Buat Akun Mahasiswa</h1>
             <p className="mt-1 text-sm text-slate-500">Lengkapi data awal agar rekomendasi belajar lebih sesuai.</p>

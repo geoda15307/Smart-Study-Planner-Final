@@ -14,6 +14,7 @@ const appRoutes = [
   ["AI Assistant", "/ai-assistant", "🤖"],
   ["Progress", "/progress", "📊"],
   ["Category", "/category", "🏷️"],
+  ["Dokumen", "/upload", "📄"],
   ["Widget", "/widget", "🧩"],
   ["Themes", "/themes", "🎨"],
   ["Achievement", "/achievement", "🏆"],

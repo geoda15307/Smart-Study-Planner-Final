@@ -1,4 +1,21 @@
 import type { Task } from "@/types";
+import { deleteBlob, getAllBlobIds, getBlob, putBlob } from "@/lib/indexedDb";
+
+export async function saveFileToStorage(id: string, file: File) {
+  await putBlob(id, file);
+}
+
+export async function getFileFromStorage(id: string) {
+  return getBlob(id);
+}
+
+export async function deleteFileFromStorage(id: string) {
+  await deleteBlob(id);
+}
+
+export async function listStoredFileIds() {
+  return getAllBlobIds();
+}
 
 export function downloadJSON(filename: string, data: unknown) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });

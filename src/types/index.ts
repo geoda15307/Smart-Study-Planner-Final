@@ -137,3 +137,17 @@ export interface TaskInput {
   notes?: string;
   subtasks: Subtask[];
 }
+
+export type UploadCategory = "image" | "document" | "spreadsheet";
+export type UploadStatus = "uploading" | "ready" | "error";
+
+export interface UploadedFileMeta {
+  id: string;
+  filename: string;
+  size: number;
+  mimeType: string;
+  category: UploadCategory;
+  status: UploadStatus;
+  errorMessage?: string;
+  createdAt: string;
+}

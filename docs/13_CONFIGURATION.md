@@ -11,12 +11,17 @@ Template ada di `.env.example` (aman di-commit, tanpa nilai asli). Nilai sungguh
 | `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_API_URL` | Metadata aplikasi | Terisi, dipakai minimal |
 | `NEXT_PUBLIC_SUPABASE_URL` | URL project Supabase | **Wajib diisi** — tanpa ini, auth tidak jalan |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Kunci publik Supabase (client-side, aman diekspos) | **Wajib diisi** |
-| `AI_PROVIDER` | Pilih provider AI (`mock`/`openai`/`anthropic`/`gemini`/`openrouter`) | Ada, default `"mock"`, **belum dipakai** oleh route AI yang hidup — lihat [11_SERVICES](./11_SERVICES.md) |
-| `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` | Kunci API provider AI | Placeholder kosong, belum dipakai kode manapun |
+| `AI_PROVIDER` | Pilih provider AI (`mock`/`openai`/`anthropic`/`gemini`/`openrouter`) | Ada, default `"mock"`. Factory `getAIProvider()` **belum dipanggil** route AI manapun sampai Milestone D — lihat [11_SERVICES](./11_SERVICES.md) |
+| `GEMINI_API_KEY` | Kunci API Google Gemini (Generative Language API) | Ada di `.env.example` (kosong). Provider `gemini` **sudah diimplementasikan** (Milestone C, raw fetch), tapi butuh key ini di `.env.local` untuk dipakai. Server-only |
+| `GEMINI_MODEL` | Override model Gemini | Opsional, default `"gemini-flash-latest"` (alias selalu-terkini — dipilih supaya tidak kena "model no longer available to new users" seperti versi ter-pin `gemini-2.5-flash`). Override ke model spesifik (mis. `gemini-3.5-flash`) kalau perlu, tanpa ubah kode |
+| `AI_DAILY_REQUEST_LIMIT` | Batas panggilan AI per user per hari (Cost Control, Milestone D) | Opsional, default `50`. Dihitung di tabel Supabase `ai_usage_log` oleh `guardAIRoute()`. Tiap chunk dokumen panjang dihitung 1 permintaan |
+| `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` | Kunci API provider AI | Placeholder kosong; provider `openai`/`anthropic` masih stub (belum diimplementasikan) |
+| `OCR_PROVIDER` | Pilih provider OCR (`ocrspace`) | Ada, default `"ocrspace"`, **sudah tersambung** ke upload kategori `image` lewat `/api/document/process` — lihat [11_SERVICES](./11_SERVICES.md) |
+| `OCR_SPACE_API_KEY` | Kunci API OCR.Space (`api.ocr.space/parse/image`) | Wajib diisi di `.env.local` supaya OCR benar-benar berfungsi; tanpa ini provider tetap resolve dengan `{success:false, errorCode:"MISSING_API_KEY"}`, bukan crash. Verifikasi Sprint 3 memakai demo key publik resmi OCR.Space (`"helloworld"`, dibagikan siapa saja, rate limit tidak terjamin) — **ganti dengan API key pribadi** dari https://ocr.space/ocrapi/freekey untuk pemakaian sungguhan |
 
-**Catatan penting:** `.env.example` sudah ada komentar `# Jangan expose API key di frontend` sejak awal project — ini alasan kenapa abstraksi provider AI ditaruh di `src/lib/ai/` (server-only), bukan `src/services/` yang bisa dipanggil dari client. Lihat [15_SECURITY](./15_SECURITY.md).
+**Catatan penting:** `.env.example` sudah ada komentar `# Jangan expose API key di frontend` sejak awal project — ini alasan kenapa abstraksi provider AI ditaruh di `src/lib/ai/` (server-only), bukan `src/services/` yang bisa dipanggil dari client. Alasan yang sama berlaku untuk `src/lib/ocr/`. Lihat [15_SECURITY](./15_SECURITY.md).
 
-Belum ada `GEMINI_API_KEY`/`OPENROUTER_API_KEY` di `.env.example` — perlu ditambahkan saat provider itu benar-benar diaktifkan (lihat stub-nya di `src/lib/ai/providers/`).
+`GEMINI_API_KEY` + `GEMINI_MODEL` sudah ditambahkan ke `.env.example` (Milestone C). `OPENROUTER_API_KEY` belum — ditambahkan saat provider `openrouter` benar-benar diimplementasikan (masih stub, lihat `src/lib/ai/providers/`).
 
 ## Konfigurasi Upload
 
@@ -30,7 +35,7 @@ Belum ada `GEMINI_API_KEY`/`OPENROUTER_API_KEY` di `.env.example` — perlu dita
 
 | File | Untuk apa |
 |---|---|
-| `next.config.mjs` | Konfigurasi Next.js — minimal, belum banyak kustomisasi |
+| `next.config.mjs` | Konfigurasi Next.js. `experimental.serverComponentsExternalPackages: ["pdf-parse", "@napi-rs/canvas"]` **wajib** ada — tanpa ini, `pdf-parse` gagal dievaluasi saat di-bundle webpack RSC (`TypeError: Object.defineProperty called on non-object`), menjatuhkan seluruh route `/api/document/process`, bukan cuma kategori PDF. Detail: [08_DOCUMENT_PIPELINE](./08_DOCUMENT_PIPELINE.md) |
 | `tsconfig.json` | TypeScript — path alias `@/*` → `./src/*`, `jsx: "preserve"` (default Next.js App Router, **jangan** diubah ke `"react-jsx"` — sempat kebawa tidak sengaja dari eksperimen upgrade Next.js 16, lihat [17_TECH_DEBT](./17_TECH_DEBT.md)) |
 | `tailwind.config.ts` | Warna Tailwind (`primary`, `slate`, `surface`, `soft`) didefinisikan sebagai CSS variable, bukan hex statis — inilah yang membuat sistem tema/dark-mode bekerja lintas seluruh aplikasi tanpa mengedit tiap komponen. Detail: [03_ARCHITECTURE](./03_ARCHITECTURE.md) |
 | `postcss.config.mjs` | Standar, untuk Tailwind |

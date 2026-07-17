@@ -4,9 +4,9 @@
 
 ## Ringkasan
 
-Aplikasi ini **hanya** punya 2 API route internal — keduanya di `src/app/api/ai/`. Tidak ada endpoint lain (tidak ada `/api/tasks`, `/api/upload`, dll — karena semua data aplikasi diakses langsung dari Zustand di sisi klien, tanpa lewat API, kecuali AI yang memang butuh eksekusi server-side).
+Aplikasi ini punya 7 API route internal: 6 di `src/app/api/ai/` dan 1 di `src/app/api/document/`. Tidak ada endpoint lain (tidak ada `/api/tasks`, dll — karena semua data aplikasi diakses langsung dari Zustand di sisi klien, tanpa lewat API, kecuali yang memang butuh eksekusi server-side untuk menyembunyikan API key: AI dan OCR).
 
-Kedua route ini **rule-based**, bukan pemanggilan LLM sungguhan — lihat [16_ROADMAP](./16_ROADMAP.md) untuk rencana mengaktifkan AI sungguhan.
+Dua route AI lama (`/api/ai/analyze`, `/api/ai/chat`) masih **rule-based**. Empat route AI baru (`/api/ai/{summary,flashcard,quiz,recommendation}`, Milestone D) **memanggil provider AI sungguhan** lewat `getAIProvider()` (mock default; Gemini bila `AI_PROVIDER=gemini`). `/api/document/process` memanggil OCR.Space sungguhan (kategori `image`).
 
 ## `POST /api/ai/analyze`
 
@@ -28,8 +28,42 @@ Kedua route ini **rule-based**, bukan pemanggilan LLM sungguhan — lihat [16_RO
 |---|---|
 | **Input** | `{ message?: string, tasks?: Task[], history?: ChatMessage[] }` |
 | **Output** | `{ reply: string }` |
-| **Logika** | `message.toLowerCase()` dicocokkan dengan keyword (`includes`) — "mana"/"prioritas"/"dulu" → jawaban soal prioritas; "jadwal" → rencana harian statis; "ringkas" → ringkasan task teratas; "tips" → tips generik. Kalau tidak cocok keyword apapun, balasan default generik. `history` diterima tapi **tidak dipakai** untuk memengaruhi jawaban (tidak ada konteks percakapan sungguhan). |
-| **Dependensi** | `utils/date.ts` (`sortTasks` — untuk menentukan task prioritas teratas) |
+| **Auth** | **Wajib login** (Milestone E) — `requireAIAuth()` → 401 tanpa sesi. **Tanpa** rate-limit harian (chat murah & sering; hanya route dokumen yang di-rate-limit — §16 E). |
+| **Logika** | Milestone E: memanggil `getAIProvider().chat(message, tasks, history)`. `AI_PROVIDER=gemini` → jawaban LLM sungguhan (konteks tugas + riwayat disuntik ke prompt). `AI_PROVIDER=mock` (default) → logika keyword rule-based yang **dipindah dari route ini ke `mock.chat`** (perilaku lama dipertahankan, tanpa biaya). |
+| **Dependensi** | `lib/ai/guard.ts` (`requireAIAuth`), `lib/ai/getAIProvider.ts` |
+
+## `POST /api/document/process`
+
+**Tujuan:** batas server untuk `DocumentProcessor` (Strategy Pattern Document Pipeline) — satu-satunya tempat processor (khususnya `imageProcessor`, yang memanggil OCR.Space) boleh dieksekusi, karena butuh `OCR_SPACE_API_KEY` yang tidak boleh sampai ke browser. Detail lengkap alurnya: `docs/SPRINT_1_ARCHITECTURE_FREEZE.md` §13 "OCR Pipeline".
+
+| | |
+|---|---|
+| **Input** | `multipart/form-data` — field `file` (Blob), `meta` (JSON string dari `UploadedFileMeta`), `category` (`DocumentCategory`) |
+| **Output** | `ProcessorResult` — `{ status: "extracted"\|"needs_ocr"\|"failed", rawText?, pageCount?, confidence?, provider?, processingTimeMs?, errorCode?, errorMessage? }` |
+| **Validasi** | Tolak (400) kalau `file`/`meta`/`category` tidak lengkap, `category` bukan salah satu dari 5 `DocumentCategory`, atau `meta` bukan JSON valid |
+| **Logika** | `getDocumentProcessor(category).process(file, meta)` — untuk `image`, ini memanggil `getOCRProvider().extractText()` (OCR.Space) sungguhan; untuk `pdf`/`document`/`spreadsheet`/`presentation` memanggil parser lokal sungguhan (Sprint 2: `pdf-parse`, `mammoth`/`word-extractor`, `xlsx`, `jszip`+`fast-xml-parser`) — hanya `.ppt` legacy yang ditolak permanen (`NOT_IMPLEMENTED`), lihat [08_DOCUMENT_PIPELINE](./08_DOCUMENT_PIPELINE.md) |
+| **Dependensi** | `lib/document/getDocumentProcessor.ts`, `lib/document/processors/*`, transitif `lib/ocr/*` |
+| **Pemanggil** | `services/document/documentService.ts` (client) — **bukan** komponen UI langsung, sama pola dengan `services/ai/aiService.ts` |
+
+**Tidak ada auth check server-side** di route ini — sama seperti `/api/ai/analyze` & `/api/ai/chat` (route AI baru Milestone D **sudah** ber-auth, lihat bawah). Ini gap keamanan yang sudah didokumentasikan ([15_SECURITY](./15_SECURITY.md)), bukan regresi baru.
+
+## Route AI baru (Milestone D) — `POST /api/ai/{summary,flashcard,quiz,recommendation}`
+
+Empat route batas-server untuk fitur AI berbasis dokumen (`AI_ARCHITECTURE_FREEZE.md` §7.3). **Berbeda dari route lama, keempatnya WAJIB melewati dua gerbang sebelum menyentuh Prompt Builder/provider**, lewat `guardAIRoute()` (`src/lib/ai/guard.ts`):
+
+1. **Auth check** — `lib/supabase/server.ts` → `supabase.auth.getUser()`. Tanpa sesi valid → **401** (`UNAUTHORIZED`). Provider tidak pernah dipanggil tanpa sesi (diverifikasi: keempat route mengembalikan 401 untuk request tanpa cookie, bahkan sebelum validasi body).
+2. **Rate-limit / Cost Control** — baca+naikkan counter harian di tabel Supabase `ai_usage_log` untuk `(user_id, hari ini)`. Lewat batas (`AI_DAILY_REQUEST_LIMIT`, default 50) → **429** (`DAILY_LIMIT`). Kalau pengecekan rate-limit **sendiri gagal** (Supabase bermasalah) → **fail-closed 503** (`RATE_LIMIT_UNAVAILABLE`), bukan diloloskan. Counter dinaikkan **sebelum** provider dipanggil, sekali per permintaan (tiap chunk dokumen panjang = 1).
+
+Setelah kedua gerbang lolos: validasi input (400) → Prompt Builder → `getAIProvider().{summarize,generateFlashcards,generateQuiz,recommend}()` → **Validation Pipeline** (parse toleran code-fence → JSON Schema → Business Validation, dengan **retry 1×** untuk kegagalan format/transient, **tanpa** retry untuk provider rate-limit — §17.4/§17.6) → response JSON.
+
+| Route | Input | Output |
+|---|---|---|
+| `POST /api/ai/summary` | `{ documentId, mode: "direct"\|"chunk"\|"merge", text?, partials?, index?, total?, meta? }` | `AISummaryOutput` + `{provider, model, tokenUsage}` (mode chunk: `{summary, ...}`) |
+| `POST /api/ai/flashcard` | `{ documentId, summary: AISummary, count? }` | `AIFlashcardSetOutput` + generation meta |
+| `POST /api/ai/quiz` | `{ documentId, summary: AISummary, count? }` | `AIQuizSetOutput` + generation meta |
+| `POST /api/ai/recommendation` | `{ documentId, summary: AISummary }` | `AIRecommendationOutput` (polymorphic) + generation meta |
+
+Response route **hanya** membawa AI Output Contract + metadata generasi (`provider`/`model`/`tokenUsage`). Field storage (`id`, `documentId`, `sourceTextHash`, `promptVersion`, `generationStrategy`, timestamps) ditambahkan oleh Service client (`services/ai/*`), bukan dikembalikan route — server tidak pernah menyimpan hasil AI (§7.2). Semua error dikembalikan sebagai `{ error: true, errorCode, message }` dengan pesan Bahasa Indonesia ramah, tidak pernah JSON mentah/stack trace (§17.5). Pemanggil: `services/ai/{documentSummary,flashcard,quiz,recommendation}Service.ts` — **bukan** komponen UI langsung.
 
 ## Kontrak yang harus dijaga kalau AI diaktifkan sungguhan
 

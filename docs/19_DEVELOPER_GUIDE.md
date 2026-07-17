@@ -44,7 +44,7 @@ npx tsc --noEmit  # Type-check (tidak ada script npm khusus untuk ini, jalankan 
 | **String literal domain itu load-bearing** | Nilai seperti `TaskStatus`, `Priority` dipakai sebagai key di banyak map (`priorityScore.ts`, `Badge.tsx`, dst.) dan dibandingkan langsung (`status === "Selesai"`). Ubah satu nilai berarti update semua map/perbandingan terkait |
 | **Halaman baru wajib di dalam `<AppShell>`** | Kalau tidak, tidak terproteksi login sama sekali. Tambahkan juga ke array `appRoutes` di `AppShell.tsx` supaya muncul di navigasi. Lihat [04_AUTHENTICATION](./04_AUTHENTICATION.md), [10_COMPONENTS](./10_COMPONENTS.md) |
 | **Jangan tambah tabel Supabase untuk data aplikasi** | Supabase hanya untuk Auth. Lihat [20_PROJECT_CONSTITUTION](./20_PROJECT_CONSTITUTION.md) Pasal 1 |
-| **Provider AI/OCR lewat abstraksi, jangan hardcode** | Implementasi baru masuk `src/lib/ai/providers/` atau modul OCR setara, ikuti interface yang sudah ada di `src/lib/ai/types.ts` / `src/services/ocr/types.ts` |
+| **Provider AI/OCR lewat abstraksi, jangan hardcode** | Implementasi baru masuk `src/lib/ai/providers/` atau `src/lib/ocr/providers/`, ikuti interface yang sudah ada di `src/lib/ai/types.ts` / `src/lib/ocr/types.ts` |
 
 ## Cara Menambah Halaman Baru
 
@@ -63,6 +63,7 @@ Kalau ragu di mana data baru harus disimpan, cek [20_PROJECT_CONSTITUTION](./20_
 
 ## Troubleshooting Umum
 
+- **UI tampil polos tanpa styling Tailwind (HTML default):** hampir pasti cache `.next/` korup karena `npm run build` dijalankan **saat `next dev` masih hidup** — keduanya berbagi folder `.next/`, build menimpa chunk dev, dev server lalu mereferensikan CSS yang sudah tidak ada (404 di `/_next/static/css/...`). Bukan bug kode. Pemulihan: matikan dev server → hapus folder `.next/` → `npm run dev` lagi. **Aturan: jangan pernah jalankan `next build` selagi dev server hidup** — matikan dev dulu kalau mau verifikasi build. Insiden nyata tercatat di [18_CHANGELOG](./18_CHANGELOG.md).
 - **Masalah auth/state yang aneh:** cek dua localStorage key sekaligus (`smart-study-planner-store` dan `sb-<ref>-auth-token`) — salah satu bisa basi sementara yang lain tidak. Lihat [04_AUTHENTICATION](./04_AUTHENTICATION.md).
 - **Icon kategori tidak muncul:** `CategoryIcon` diam-diam fallback ke ikon default kalau string nama icon tidak cocok nama komponen Lucide — cek ejaan `category.icon`. Lihat [10_COMPONENTS](./10_COMPONENTS.md).
 - **Reset data demo:** tombol "Reset Data" di Settings memanggil `resetDemoData()` — pertahankan sesi login, tapi kosongkan `uploadedFiles` di store **tanpa** membersihkan blob-nya di IndexedDB (gap yang sudah dicatat, lihat [17_TECH_DEBT](./17_TECH_DEBT.md)).

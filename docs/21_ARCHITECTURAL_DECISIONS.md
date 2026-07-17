@@ -68,7 +68,7 @@ Catatan keputusan arsitektur (ADR) — **kenapa** sesuatu dibangun seperti sekar
 
 **Konteks:** Provider yang direkomendasikan ([16_ROADMAP](./16_ROADMAP.md), Google Gemini) bisa melakukan OCR *dan* ringkasan dalam satu pemanggilan (native vision + long-context). Godaan alaminya: gabung jadi satu interface saja.
 
-**Keputusan:** Tetap dua interface terpisah — `OCRProvider` (`src/services/ocr/types.ts`) dan `AIProvider.summarizeDocument` (`src/lib/ai/types.ts`).
+**Keputusan:** Tetap dua interface terpisah — `OCRProvider` (`src/lib/ocr/types.ts`, dipindah dari `src/services/ocr/` saat implementasi pertama/`OCRSpaceProvider` ditulis — lihat [11_SERVICES](./11_SERVICES.md)) dan `AIProvider.summarizeDocument` (`src/lib/ai/types.ts`).
 
 **Alasan:** Memisahkan concern memungkinkan kombinasi provider yang berbeda (misal: Mistral OCR — kualitas ekstraksi teks terbaik di kelasnya — dipasangkan dengan provider lain untuk ringkasan) tanpa terkunci ke satu provider yang kebetulan bisa keduanya. Optimasi "satu provider untuk semua" bisa jadi kasus khusus yang mengimplementasikan kedua interface, bukan alasan menggabungkan kontraknya.
 

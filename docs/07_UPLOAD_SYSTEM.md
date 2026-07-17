@@ -2,7 +2,7 @@
 
 [← Kembali ke Master Index](./ALL_DOCUMENTATION.md)
 
-Status: **✅ Selesai dan berjalan.** Ini adalah langkah pertama dari [08_DOCUMENT_PIPELINE](./08_DOCUMENT_PIPELINE.md) — bagian OCR/AI Summary setelahnya belum dibuat.
+Status: **✅ Selesai dan berjalan.** Ini adalah langkah pertama dari [08_DOCUMENT_PIPELINE](./08_DOCUMENT_PIPELINE.md) — sejak Sprint 2/3, pipeline lanjutannya (deteksi kategori → processor → ekstraksi teks) juga sudah berjalan otomatis setelah upload untuk 5 dari 5 kategori (4 di antaranya penuh, 1 — PPT legacy — sengaja ditolak, lihat di bawah). AI Summary/Flashcard/Quiz/Recommendation masih belum dibuat.
 
 ## Kebijakan penyimpanan
 
@@ -15,13 +15,17 @@ Detail hubungan keduanya: [06_STATE_MANAGEMENT](./06_STATE_MANAGEMENT.md).
 
 ## Tipe file yang didukung
 
-| Kategori | Ekstensi | MIME type |
-|---|---|---|
-| Gambar | `.png`, `.jpg`, `.jpeg` | `image/png`, `image/jpeg` |
-| Dokumen | `.pdf` | `application/pdf` |
-| Spreadsheet | `.xlsx`, `.xls`, `.csv` | Office/Excel MIME types, `text/csv` |
+`DocumentCategory` (5 nilai, lihat [08_DOCUMENT_PIPELINE](./08_DOCUMENT_PIPELINE.md)) — diperluas dari 3 kategori awal saat local parser Sprint 2 dibangun:
 
-Dikonfigurasi di `src/lib/upload/config.ts` — **satu tempat** untuk mengubah tipe yang diizinkan atau ukuran maksimal (default 10MB), sesuai permintaan agar mudah diubah tanpa menyentuh banyak file.
+| Kategori | Ekstensi | MIME type | Ekstraksi teks |
+|---|---|---|---|
+| `image` | `.png`, `.jpg`, `.jpeg` | `image/png`, `image/jpeg` | ✅ via OCR.Space (kategori `image` saja) |
+| `pdf` | `.pdf` | `application/pdf` | ✅ via `pdf-parse` (PDF digital; hasil scan tanpa teks akan `EMPTY_RESULT`) |
+| `document` | `.doc`, `.docx` | `application/msword`, `.wordprocessingml.document` | ✅ `.docx` via `mammoth`, `.doc` via `word-extractor` (best-effort, lihat [17_TECH_DEBT](./17_TECH_DEBT.md)) |
+| `spreadsheet` | `.xlsx`, `.xls`, `.csv` | Office/Excel MIME types, `text/csv` | ✅ via `xlsx` (SheetJS) |
+| `presentation` | `.ppt`, `.pptx` | `application/vnd.ms-powerpoint`, `.presentationml.presentation` | ✅ `.pptx` via parser kustom (`jszip`+`fast-xml-parser`) — `.ppt` **ditolak** (`NOT_IMPLEMENTED`), tidak ada library JS yang layak untuk format biner ini |
+
+Dikonfigurasi di `src/lib/upload/config.ts` — **satu tempat** untuk mengubah tipe yang diizinkan atau ukuran maksimal (default 10MB), sesuai permintaan agar mudah diubah tanpa menyentuh banyak file. Kategori `UploadCategory` yang dulu terpisah (3 nilai) sudah disatukan penuh ke `DocumentCategory` (5 nilai) — lihat migrasi di `useAppStore.ts` dan `docs/SPRINT_1_ARCHITECTURE_FREEZE.md` §8.
 
 ## Alur upload
 
@@ -54,7 +58,7 @@ UploadFileItem fetch ulang blob dari IndexedDB → buat object URL → tampilkan
 - ✅ Preview gambar — fetch blob dari IndexedDB, buat `URL.createObjectURL`
 - ✅ Validasi file (tipe + ukuran), pesan error jelas per file
 - ✅ Ukuran maksimal mudah diubah (satu konstanta di `lib/upload/config.ts`)
-- ✅ Hapus file — membersihkan **baik** metadata di store **maupun** blob di IndexedDB (tidak meninggalkan sampah)
+- ✅ Hapus file — membersihkan metadata di store, blob di IndexedDB, **dan** `DocumentRecord` terkait (`documentRepository.delete`) — tidak meninggalkan sampah di store manapun
 
 ## Komponen & file terkait
 
@@ -72,4 +76,4 @@ UploadFileItem fetch ulang blob dari IndexedDB → buat object URL → tampilkan
 
 ## Yang BELUM ada (sengaja)
 
-Sistem ini berhenti tepat setelah file tersimpan. **Tidak ada** ekstraksi teks/OCR, **tidak ada** ringkasan AI — itu tahap selanjutnya, didesain (bukan diimplementasikan) di [08_DOCUMENT_PIPELINE](./08_DOCUMENT_PIPELINE.md).
+Sejak Sprint 2/3, sistem **tidak lagi** berhenti setelah file tersimpan — ekstraksi teks berjalan otomatis untuk semua kategori (lihat tabel di atas). Yang **masih** belum ada: ringkasan AI, flashcard, quiz, task/calendar recommendation — didesain (bukan diimplementasikan) di [08_DOCUMENT_PIPELINE](./08_DOCUMENT_PIPELINE.md).

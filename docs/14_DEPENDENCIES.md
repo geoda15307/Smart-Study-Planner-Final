@@ -18,6 +18,16 @@ Daftar lengkap ada di `package.json`. Dokumen ini menjelaskan **kenapa** depende
 | `recharts` | Chart di halaman Progress (`ProgressCharts.tsx`) | `chart.js`, `visx` |
 | `clsx`, `tailwind-merge` | Utility gabungan className kondisional — umum dipakai bersama Tailwind | — |
 
+## Local Parser (Sprint 2) — server-only, lihat [08_DOCUMENT_PIPELINE](./08_DOCUMENT_PIPELINE.md)
+
+| Package | Kenapa dipakai | Catatan |
+|---|---|---|
+| `pdf-parse` (v2) | Ekstraksi teks PDF digital, wrapper `pdfjs-dist` | Butuh `experimental.serverComponentsExternalPackages` di `next.config.mjs` — gagal di-bundle webpack RSC tanpa itu |
+| `mammoth` | Ekstraksi teks `.docx` | README menyebut opsi `{arrayBuffer}` tapi source code aktual hanya menerima `{buffer}`/`{path}` — pakai `{buffer: Buffer.from(...)}`. Tidak punya `@types` bawaan maupun `@types/mammoth` di registry — deklarasi ambient manual di `src/types/mammoth.d.ts` |
+| `word-extractor` + `@types/word-extractor` | Ekstraksi teks `.doc` (format lama) | Library terakhir update 2022 — dipilih sadar sebagai best-effort (tidak ada alternatif JS yang lebih terawat), lihat [17_TECH_DEBT](./17_TECH_DEBT.md) |
+| `xlsx` (SheetJS) | Parsing `.xlsx`/`.xls`/`.csv` | **Diinstal dari CDN resmi SheetJS** (`https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz`), bukan npm registry — versi npm (`0.18.5`) punya 2 CVE HIGH tanpa fix (Prototype Pollution, ReDoS) yang relevan langsung karena package ini memparsing file upload pengguna. SheetJS sendiri sudah berhenti publish ke npm karena sengketa kebijakan penamaan; CDN adalah kanal resmi mereka untuk versi yang sudah diperbaiki |
+| `jszip` + `fast-xml-parser` | Parser PPTX kustom (`.pptx` = ZIP + XML) | Dipilih daripada library "pptx-parser" pihak ketiga yang beta/tidak terawat sejak 2022 — kedua library ini generik, aktif dipelihara, dan hasilnya dikontrol penuh oleh kode sendiri |
+
 ## Dev dependencies
 
 | Package | Kenapa |
@@ -32,8 +42,8 @@ Daftar lengkap ada di `package.json`. Dokumen ini menjelaskan **kenapa** depende
 Beberapa library yang mungkin terlihat "wajar" untuk fitur yang ada, tapi sengaja tidak ditambahkan:
 
 - **`react-dropzone`** — drag & drop upload di-hand-roll pakai native browser Drag-and-Drop API + `<input type="file">`, bukan library. Konsisten dengan gaya project ini yang menjaga jumlah dependency tetap kecil.
-- **`xlsx`/`papaparse`** — belum ditambahkan karena sistem upload saat ini hanya menyimpan file spreadsheet mentah, belum membaca isinya (parsing baru dibutuhkan saat OCR/document-processing dibangun — lihat [08_DOCUMENT_PIPELINE](./08_DOCUMENT_PIPELINE.md)).
-- **SDK provider AI** (`openai`, `@anthropic-ai/sdk`, `@google/generative-ai`, dst.) — belum ditambahkan karena provider AI belum diaktifkan (lihat [16_ROADMAP](./16_ROADMAP.md)). Stub provider di `src/lib/ai/providers/` saat ini tidak butuh SDK apapun karena cuma melempar error.
+- **`papaparse`** — tidak ditambahkan terpisah untuk CSV karena `xlsx` (SheetJS) sudah menangani `.csv`/`.xls`/`.xlsx` dalam satu library, mengurangi jumlah dependency.
+- **SDK provider AI** (`openai`, `@anthropic-ai/sdk`, `@google/generative-ai`, dst.) — **sengaja tidak ditambahkan meski provider Gemini kini nyata** (Milestone C). `src/lib/ai/providers/gemini.ts` memanggil REST API Generative Language lewat `fetch` mentah + `x-goog-api-key` header, persis gaya `lib/ocr/ocrSpaceProvider.ts` yang juga hand-roll HTTP — menjaga jumlah dependency tetap kecil. Konsekuensinya: konversi `PromptSpec.responseSchema` (JSON Schema penuh) ke subset yang didukung Gemini ditangani sendiri di `gemini.ts` (`toGeminiSchema`), bukan oleh SDK. `openai`/`anthropic`/`openrouter` masih stub, jadi belum butuh SDK apapun.
 
 ## Versi Next.js — insiden yang perlu diketahui
 

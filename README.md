@@ -1,70 +1,35 @@
 # Smart Study Planner
 
-Smart Study Planner adalah aplikasi **academic productivity assistant** berbasis AI untuk membantu mahasiswa mengatur jadwal kuliah, deadline tugas, prioritas belajar, progress akademik, dan rekomendasi rencana belajar otomatis.
+Aplikasi **academic productivity assistant** untuk mahasiswa: manajemen tugas dengan priority score otomatis, jadwal kuliah & kalender, rekomendasi belajar rule-based, upload dokumen materi dengan ekstraksi teks otomatis (OCR + parser lokal), dan — sedang dibangun — ringkasan materi via AI.
 
-Project ini dibuat sebagai **MVP mobile-first** dengan Next.js, TypeScript, Tailwind CSS, Zustand, LocalStorage, dan API route mock/fallback AI. Data dummy sudah tersedia sehingga aplikasi langsung terlihat saat dijalankan.
+UI sepenuhnya Bahasa Indonesia, mobile-first, responsive desktop. Dibangun dengan Next.js 14 (App Router), TypeScript, Tailwind CSS, Zustand, IndexedDB, dan Supabase (khusus Authentication).
 
-## Fitur MVP
+> **Dokumentasi utama ada di [`docs/`](./docs/ALL_DOCUMENTATION.md)** — README ini hanya ringkasan. Mulai dari master index tersebut, dan baca [`docs/20_PROJECT_CONSTITUTION.md`](./docs/20_PROJECT_CONSTITUTION.md) untuk aturan project yang tidak boleh dilanggar tanpa diskusi eksplisit.
 
-- Login dan register mock.
-- Onboarding 4 langkah.
-- Dashboard akademik.
-- Task Manager dengan tambah, hapus, tandai selesai, filter, search, sort priority.
-- Form Add Task / New Schedule.
-- Calendar monthly view.
-- Smart Schedule Generator rule-based.
-- AI Task Analysis melalui `/api/ai/analyze`.
-- AI Assistant chat melalui `/api/ai/chat`.
-- Progress & Analytics dengan chart.
-- Category, Widget, Themes, Account, Achievement, Premium, Settings.
-- Export JSON/CSV.
-- UI Bahasa Indonesia, mobile-first, responsive desktop.
-- Data tersimpan di LocalStorage.
-- Struktur siap dikembangkan ke backend PostgreSQL dan AI API production.
+## Arsitektur Singkat
 
-## Struktur Folder
+**Local-first.** Hampir seluruh data aplikasi hidup di browser pengguna:
 
-```txt
-src/
-  app/
-    auth/login
-    auth/register
-    dashboard
-    tasks
-    tasks/new
-    calendar
-    ai-assistant
-    progress
-    category
-    widget
-    themes
-    account
-    achievement
-    premium
-    settings
-    api/ai/analyze
-    api/ai/chat
-  components/
-    common
-    layout
-    tasks
-    calendar
-    ai
-    progress
-    feature
-  constants/
-  hooks/
-  lib/
-  services/
-    ai
-    auth
-    storage
-  store/
-  types/
-  utils/
-```
+| Data | Tempat |
+|---|---|
+| Task, kategori, jadwal, preferensi, achievement, chat | Zustand + localStorage (`smart-study-planner-store`) |
+| Blob file upload + hasil ekstraksi teks (`DocumentRecord`) | IndexedDB (store `files` + `documents`) |
+| Identitas pengguna (register/login/session/profil) | **Supabase — hanya untuk Authentication** (keputusan final, lihat Konstitusi Pasal 1) |
 
-## Cara Setup di VS Code
+AI & OCR hanya dipanggil lewat API route internal (`/api/ai/*`, `/api/document/process`) supaya API key tidak pernah sampai ke browser.
+
+## Fitur Saat Ini
+
+- ✅ **Autentikasi sungguhan** via Supabase Auth (register/login/logout/session) — bukan mock.
+- ✅ **Task Manager**: CRUD, subtask checklist, filter/search/sort, priority score otomatis.
+- ✅ **Kalender bulanan** + jadwal kuliah.
+- ✅ **Kategori** dengan Lucide icon + daftar "Aktivitas" per kategori.
+- ✅ **4 tema warna + dark mode** — CSS variable, real-time & persisten.
+- ✅ **Upload dokumen** (gambar/PDF/Word/spreadsheet/PPTX, maks 10MB) → pipeline otomatis: validasi → deteksi kategori → ekstraksi teks (OCR.Space untuk gambar; `pdf-parse`/`mammoth`/`word-extractor`/`xlsx`/parser PPTX kustom untuk sisanya) → tersimpan sebagai `DocumentRecord` di IndexedDB. `.ppt` legacy ditolak permanen (tidak ada library JS yang layak).
+- ✅ **Progress & Analytics** (chart), achievement (data seed), export JSON/CSV.
+- ⚠️ **AI Assistant & AI Task Analysis** — masih **rule-based** (`/api/ai/analyze`, `/api/ai/chat`), bukan LLM sungguhan. Arsitektur AI sungguhan (Summary/Flashcard/Quiz/Recommendation) sudah **APPROVED** di [`docs/AI_ARCHITECTURE_FREEZE.md`](./docs/AI_ARCHITECTURE_FREEZE.md), diimplementasikan bertahap lewat Milestone A–E.
+
+## Setup
 
 ```bash
 npm install
@@ -72,49 +37,37 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Buka:
+Isi di `.env.local` (wajib):
+
+- `NEXT_PUBLIC_SUPABASE_URL` + `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — tanpa ini autentikasi tidak jalan.
+- `OCR_SPACE_API_KEY` — supaya OCR gambar berfungsi (daftar gratis di https://ocr.space/ocrapi/freekey).
+
+Buka http://localhost:3000 — root otomatis redirect ke `/auth/login`.
+
+Akun demo (atau klik tombol **"Masuk sebagai Demo"** di halaman login):
 
 ```txt
-http://localhost:3000
-```
-
-Akun demo:
-
-```txt
-Email    : demo@student.com
+Email    : demo@smartstudy.app
 Password : password123
 ```
 
-## Build Production
+> Supabase memvalidasi domain email sungguhan — domain palsu seperti `@example.com` ditolak saat register. "Confirm email" saat ini dimatikan di dashboard Supabase (tahap development; tinjau ulang sebelum production — lihat `docs/15_SECURITY.md`).
+
+## Perintah
 
 ```bash
-npm run build
-npm run start
+npm run dev       # dev server, http://localhost:3000
+npm run build     # production build
+npm run start     # serve production build
+npm run lint      # ESLint (next lint)
+npx tsc --noEmit  # type-check (tidak ada script npm khusus)
 ```
 
-## Deployment Sederhana
-
-1. Push ke GitHub.
-2. Import repository ke Vercel.
-3. Tambahkan environment variable dari `.env.example`.
-4. Deploy.
-
-## Cara Kerja AI
-
-Frontend tidak memanggil AI provider langsung. Frontend memanggil API route internal:
-
-```txt
-POST /api/ai/analyze
-POST /api/ai/chat
-```
-
-Saat ini endpoint menggunakan rule-based mock agar tetap berjalan tanpa API key. Untuk production, tambahkan OpenAI/Claude API di API route atau backend Node/Django.
+Tidak ada test runner. Verifikasi perubahan: `tsc` + `lint` bersih **dan** uji manual di browser (Konstitusi Pasal 6).
 
 ## Priority Scoring
 
 File: `src/utils/priorityScore.ts`
-
-Formula:
 
 ```txt
 priorityScore =
@@ -125,47 +78,18 @@ durationScore * 0.10 +
 statusRiskScore * 0.10
 ```
 
-Skor:
-- 80-100: Urgent
-- 60-79: High
-- 40-59: Medium
-- 0-39: Low
+Hasil di-clamp 0–100; status `"Selesai"` memaksa skor 0. Skor: 80–100 Urgent · 60–79 High · 40–59 Medium · 0–39 Low.
 
 ## Smart Schedule Generator
 
-File: `src/utils/smartSchedule.ts`
-
-Aturan:
-- Task deadline terdekat dan score tinggi didahulukan.
-- Task panjang dipecah menjadi sesi maksimal 90 menit.
-- Jadwal mengikuti waktu produktif user.
-- Task selesai tidak dijadwalkan lagi.
-- AI hanya memberi saran tambahan; hasil tetap bisa diedit user.
+File: `src/utils/smartSchedule.ts` — rule-based: task deadline terdekat & skor tinggi didahulukan, task panjang dipecah jadi sesi 45–90 menit, mengikuti `productiveTime` dan `maxStudyHoursPerDay` user, task selesai tidak dijadwalkan lagi.
 
 ## Tahap Pengembangan Berikutnya
 
-- Backend Django REST/NestJS + PostgreSQL.
-- JWT authentication real.
-- File upload PDF/DOCX.
-- AI output JSON schema validation.
-- Push notification PWA.
-- Google Calendar dan Google Drive sync.
-- Subscription dan admin dashboard.
+Roadmap aktif: [`docs/16_ROADMAP.md`](./docs/16_ROADMAP.md). Ringkas — fase AI per [`docs/AI_ARCHITECTURE_FREEZE.md`](./docs/AI_ARCHITECTURE_FREEZE.md):
 
-## Revisi v2 - Mobile & Auth Flow
-
-Perbaikan pada versi ini:
-
-1. Root aplikasi sekarang diarahkan ke `/auth/login`, bukan langsung ke dashboard.
-2. Semua halaman utama yang memakai `AppShell` sudah dilindungi dengan pengecekan `isAuthenticated` dari Zustand persist.
-3. Login/register sekarang menyimpan status auth dan mock JWT token ke store.
-4. Mobile mode memiliki tombol menu lengkap (`☰`) pada header dan bottom navigation.
-5. Mobile drawer menampilkan semua menu desktop: Dashboard, Tasks, Calendar, AI Assistant, Progress, Category, Widget, Themes, Achievement, Premium, Account, dan Settings.
-6. Mobile header memiliki tombol back `←` pada halaman selain Dashboard.
-7. Account page memiliki tombol Logout yang membersihkan token dan mengembalikan user ke halaman login.
-8. Onboarding ikut dicek sesi login agar tidak bisa dibuka langsung tanpa autentikasi.
-
-Catatan saat mencoba ulang di browser:
-
-- Jika sebelumnya project lama pernah dibuka, hapus localStorage browser agar flow login baru terlihat bersih.
-- Bisa juga buka DevTools → Application → Local Storage → hapus key `smart-study-planner-store` dan `smart-study-planner-token`.
+1. Milestone A — domain model AI + Prompt Builder + chunking (pure, additive).
+2. Milestone B — storage AI (IndexedDB v3, `aiRepository`, cache, tabel `ai_usage_log`).
+3. Milestone C — provider Gemini + mock lengkap.
+4. Milestone D — AI service + route `/api/ai/*` dengan auth + rate limiting.
+5. Milestone E — UI Summary/Flashcard/Quiz/Recommendation + AI chat sungguhan.

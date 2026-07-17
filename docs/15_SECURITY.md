@@ -12,14 +12,16 @@
 
 ## API Security — celah yang perlu diketahui
 
-**Kedua route API (`/api/ai/analyze`, `/api/ai/chat`) tidak punya pengecekan autentikasi di sisi server.** Proteksi login yang ada (`AppShell`, lihat [04_AUTHENTICATION](./04_AUTHENTICATION.md)) hanya berlaku untuk **halaman yang dirender**, bukan untuk API route itu sendiri — `middleware.ts` cuma me-refresh cookie session, tidak memblokir request tanpa session. Artinya, secara teknis, siapapun yang tahu URL endpoint-nya bisa mengirim POST request langsung tanpa login.
+**Ketiga route API (`/api/ai/analyze`, `/api/ai/chat`, `/api/document/process`) tidak punya pengecekan autentikasi di sisi server.** Proteksi login yang ada (`AppShell`, lihat [04_AUTHENTICATION](./04_AUTHENTICATION.md)) hanya berlaku untuk **halaman yang dirender**, bukan untuk API route itu sendiri — `middleware.ts` cuma me-refresh cookie session, tidak memblokir request tanpa session. Artinya, secara teknis, siapapun yang tahu URL endpoint-nya bisa mengirim POST request langsung tanpa login.
 
-Dampak saat ini **rendah** karena kedua route ini rule-based (tidak memanggil API berbayar, tidak mengekspos data sensitif spesifik-user — input `tasks`/`task` dikirim langsung oleh pemanggil, bukan diambil dari database berdasar identitas). **Tapi ini menjadi penting begitu provider AI sungguhan diaktifkan** (lihat [16_ROADMAP](./16_ROADMAP.md)): tanpa pengecekan auth, siapapun bisa memicu pemanggilan API berbayar tanpa batas, membebani kuota/biaya. Rekomendasi: tambahkan pengecekan session Supabase (lewat `lib/supabase/server.ts`) di awal kedua route handler sebelum mengaktifkan provider AI sungguhan.
+Ini berlaku untuk route AI **lama** (`/api/ai/analyze`, `/api/ai/chat`, masih rule-based — dampak rendah) dan `/api/document/process` (kategori `image` memicu OCR.Space memakai `OCR_SPACE_API_KEY`, jadi request tanpa login bisa ikut menghabiskan kuota OCR).
+
+**Update Milestone D — celah ini SUDAH DITUTUP untuk empat route AI baru** (`/api/ai/{summary,flashcard,quiz,recommendation}`, satu-satunya yang bisa memicu biaya token AI berbayar). Keempatnya melewati `guardAIRoute()` (`src/lib/ai/guard.ts`) sebelum menyentuh provider: **(1) Auth check** — tanpa sesi Supabase valid → 401, provider tidak pernah dipanggil (diverifikasi end-to-end: 401 untuk request tanpa cookie di keempat route, sebelum validasi body); **(2) Rate-limit fail-closed** — counter harian per user di `ai_usage_log` (§7.4), lewat batas → 429, dan kalau pengecekannya sendiri gagal → 503 (ditolak, bukan diloloskan). Route AI lama + `/api/document/process` **belum** ditutup (masih gap terdokumentasi — bukan pemicu biaya AI berbayar; kandidat ditutup dengan pola guard yang sama bila diperlukan).
 
 ## Storage (client-side)
 
 - **IndexedDB dan localStorage tidak terenkripsi** dan bisa diakses oleh script apapun yang berjalan di origin yang sama — risiko standar untuk arsitektur local-first, relevan kalau suatu saat ada celah XSS di aplikasi.
-- Sisi baiknya: file yang diupload pengguna **tidak pernah meninggalkan browser mereka** kecuali nanti dikirim eksplisit ke provider OCR/AI (belum terjadi, lihat [08_DOCUMENT_PIPELINE](./08_DOCUMENT_PIPELINE.md)) — secara privasi ini lebih baik dibanding upload otomatis ke cloud storage.
+- Catatan privasi (diperbarui Sprint 3): file yang diupload tetap tersimpan lokal, **tapi tidak lagi sepenuhnya tinggal di browser** — untuk diproses, blob dikirim ke route server aplikasi ini (`/api/document/process`), dan khusus kategori `image` diteruskan ke **OCR.Space (pihak ketiga)** untuk ekstraksi teks. Kategori lain (PDF/Word/spreadsheet/PPTX) diparsing di server aplikasi sendiri, tidak dikirim ke pihak ketiga manapun. Hasil ekstraksi hanya disimpan di IndexedDB browser pengguna, tidak di server.
 - Tidak ada batas kuota storage browser yang ditangani secara eksplisit — kalau IndexedDB penuh (jarang terjadi untuk pemakaian wajar), belum ada penanganan error khusus di kode.
 
 ## Environment Variables
@@ -31,5 +33,7 @@ Dampak saat ini **rendah** karena kedua route ini rule-based (tidak memanggil AP
 ## Ringkasan risiko yang perlu ditindaklanjuti sebelum production
 
 1. Nyalakan kembali `Confirm email` di Supabase (butuh provider email/SMTP sungguhan dulu — lihat [16_ROADMAP](./16_ROADMAP.md)).
-2. Tambahkan pengecekan auth di route `/api/ai/*` sebelum provider AI sungguhan aktif.
-3. Pertimbangkan rate limiting di route API kalau provider AI berbayar sudah aktif.
+2. ✅ **Selesai (Milestone D):** auth check di empat route AI baru (`/api/ai/{summary,flashcard,quiz,recommendation}`) — satu-satunya pemicu biaya token AI. Route AI lama (`analyze`/`chat`, rule-based) + `/api/document/process` belum ditutup (kandidat, bukan pemicu biaya AI).
+3. ✅ **Selesai (Milestone D):** rate limiting per user (`ai_usage_log`, fail-closed 429/503) di empat route AI baru — §7.3–7.4.
+4. Ganti `OCR_SPACE_API_KEY` demo publik (`"helloworld"`) dengan API key pribadi (lihat [13_CONFIGURATION](./13_CONFIGURATION.md)).
+5. Pertimbangkan increment counter `ai_usage_log` yang atomik (saat ini read-then-upsert — race kecil, diterima untuk MVP single-user; lihat [11_SERVICES](./11_SERVICES.md)).

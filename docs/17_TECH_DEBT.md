@@ -31,6 +31,15 @@ Semua dependency lain terverifikasi masih dipakai — detail alasan tiap depende
 |---|---|
 | `services/storage/storageService.ts` | Berisi dua kelompok fungsi tidak berhubungan dalam satu file: export JSON/CSV (fitur lama) dan penyimpanan file upload ke IndexedDB (fitur baru). Belum masalah besar karena ukurannya masih kecil, tapi berpotensi membingungkan kalau terus bertambah |
 
+## Known Risk / Dependency Gotcha (Local Parser, Sprint 2)
+
+| Item | Detail |
+|---|---|
+| `word-extractor` (.doc legacy) | Terakhir di-update 2022 (~4 tahun). Dipilih sadar (bukan alpa) sebagai satu-satunya opsi best-effort untuk format biner Word lama — tidak ada alternatif JS yang lebih terawat. Kalau ada bug edge-case di masa depan, tidak ada jaminan maintenance upstream |
+| `.ppt` (PowerPoint legacy, biner) | **Tidak didukung sama sekali**, bukan bug — sudah dicek, tidak ada library JS yang layak untuk format ini (beda dengan `.doc` yang setidaknya punya `word-extractor`). Processor menolaknya eksplisit dengan `errorCode: "NOT_IMPLEMENTED"` |
+| `mammoth` README vs source code | README mendokumentasikan opsi `{arrayBuffer}` untuk `extractRawText`, tapi source code aktual (`lib/unzip.js`) hanya mengecek `options.path`/`options.buffer` — `{arrayBuffer}` gagal diam-diam (`"Could not find file in options"`). Ketahuan lewat testing langsung, bukan dari dokumentasi. Kalau upgrade versi `mammoth` di masa depan, verifikasi ulang perilaku ini sebelum percaya README |
+| `xlsx` diinstal dari CDN SheetJS, bukan npm registry | Versi npm resmi (`0.18.5`) punya 2 CVE HIGH tanpa fix (Prototype Pollution, ReDoS) yang relevan langsung ke aplikasi ini (memparsing file upload pengguna). `package.json` menunjuk ke `https://cdn.sheetjs.com/xlsx-latest/xlsx-latest.tgz` — kalau `npm install` dijalankan ulang di masa depan, versi yang terpasang bisa berbeda dari saat ini (`0.20.3`) karena URL menunjuk ke "latest", bukan versi tertentu yang dikunci |
+
 ## Obsolete Migration / Konfigurasi
 
 | Item | Detail |
@@ -41,6 +50,18 @@ Semua dependency lain terverifikasi masih dipakai — detail alasan tiap depende
 ## TODO / FIXME
 
 **Tidak ditemukan** komentar `TODO`/`FIXME`/`HACK`/`XXX` eksplisit di manapun dalam `src/` (dikonfirmasi lewat pencarian menyeluruh) — konsisten dengan gaya project ini yang memang minim komentar kode secara umum, bukan berarti tidak ada pekerjaan tertunda (lihat [16_ROADMAP](./16_ROADMAP.md) untuk daftar pekerjaan yang belum selesai secara eksplisit).
+
+## AI (Milestone A–E) — backlog & batasan yang disadari
+
+| Item | Detail |
+|---|---|
+| `ai_usage_log` increment tidak atomik | `guard.ts` memakai read-then-upsert — ada race kecil kalau dua request AI bersamaan (dua-duanya baca count sama, tulis count+1 yang sama). Diterima untuk MVP single-user; kandidat: RPC Postgres atomik. Juga di [15_SECURITY](./15_SECURITY.md) |
+| Chat tidak di-rate-limit | `/api/ai/chat` hanya auth (bukan `ai_usage_log`) — keputusan sadar (chat murah & sering, §16 E). Kalau `AI_PROVIDER=gemini` dipakai berat, chat bisa jadi celah biaya yang tak terbatas; pertimbangkan rate-limit terpisah kalau perlu |
+| `DocumentDebugPanel` masih ada | Panel debug Sprint 3 (status ekstraksi + teks mentah) masih ditampilkan di `UploadFileItem` bersama `AIDocumentPanel` yang lebih rapi. Bukan desain final — kandidat disembunyikan/diringkas |
+| Task dari saran AI pakai default | `suggestionToTask` mengisi `categoryId: "lainnya"`, `difficulty: "Medium"`, `deadlineDate: +7 hari` kalau saran tidak memberi — belum ada UI untuk user menyetel sebelum menambah. `AICalendarSuggestion` tanpa tanggal → default hari ini / jam 19:00 |
+| Hasil AI tidak di-mirror ke Zustand | Tiap panel AI membaca `aiRepository` (IndexedDB) sendiri saat mount — tidak ada mirror reaktif seperti `documents`. Cukup untuk MVP (panel per-dokumen); kalau butuh reaktivitas lintas halaman, tambah slice non-persisted |
+| `resetDemoData()` tidak membersihkan store `ai_*` IndexedDB | Sama pola dengan gap `uploadedFiles`/`documents` yang sudah ada — reset store tidak menghapus `AISummary`/dll di IndexedDB |
+| `AITaskSuggestion.status: "applied"` dipersist, tapi tidak ada UI daftar rekomendasi historis | Setelah "Tambahkan ke Tugas", saran ditandai `applied` + dipersist, tapi hanya terlihat saat panel dokumen dibuka lagi; belum ada halaman "riwayat rekomendasi" |
 
 ## Rekomendasi (belum dieksekusi, butuh keputusan)
 

@@ -18,11 +18,11 @@ Satu tempat bagi mahasiswa untuk: mencatat tugas dengan prioritas yang dihitung 
 | Kalender & jadwal kuliah | ✅ Berjalan |
 | Kategori tugas dengan icon (Lucide) & daftar aktivitas per kategori | ✅ Berjalan |
 | Tema warna (4 pilihan) + dark mode, real-time & persisten | ✅ Berjalan |
-| AI Assistant & Calendar Assistant | ⚠️ Berjalan, tapi **rule-based**, bukan LLM sungguhan |
+| AI Assistant | ✅ Berjalan — bisa LLM sungguhan (`AI_PROVIDER=gemini`) atau rule-based (`mock`, default). Lihat [16_ROADMAP](./16_ROADMAP.md) |
 | Autentikasi (register/login/logout/session) | ✅ Berjalan, via Supabase Auth sungguhan |
-| Upload dokumen (gambar, PDF, spreadsheet) | ✅ Berjalan, penyimpanan lokal (IndexedDB) |
-| OCR dokumen yang diupload | ❌ Belum dibuat — baru interface/abstraksi |
-| AI Summary dari hasil OCR | ❌ Belum dibuat — baru interface/abstraksi |
+| Upload dokumen (gambar, PDF, spreadsheet, Word, PPTX) | ✅ Berjalan, penyimpanan lokal (IndexedDB) |
+| OCR & ekstraksi teks dokumen | ✅ Berjalan — OCR.Space (gambar) + parser lokal (PDF/DOCX/DOC/XLS/CSV/PPTX), Sprint 2–3 |
+| AI Summary / Flashcard / Quiz / Recommendation | ✅ Berjalan (Milestone A–E) — panel per-dokumen dengan Gemini, ber-cache + rate-limit |
 | Widget dashboard yang bisa diatur | ⚠️ Ada UI pengaturannya, tapi dashboard belum benar-benar membaca pengaturan tersebut |
 | Progress tracking & achievement | ✅ Berjalan (data seed, belum ada logika unlock otomatis) |
 
@@ -45,8 +45,8 @@ Project ini dikembangkan oleh tim kecil (kolaborasi lewat GitHub — beberapa pe
 
 **Keputusan arsitektur paling penting yang perlu dipahami sebelum melanjutkan pengembangan:**
 
-1. **Supabase hanya untuk Auth.** Sempat ada rencana memindahkan seluruh data aplikasi (task, kategori, dll) ke Supabase — rencana itu **dibatalkan**. Semua data aplikasi tetap lokal. Lihat [04_AUTHENTICATION](./04_AUTHENTICATION.md) dan [05_DATABASE](./05_DATABASE.md).
-2. **AI masih rule-based**, bukan LLM sungguhan. Abstraksi provider sudah disiapkan tapi belum diaktifkan — butuh API key sebelum bisa dipakai. Lihat [16_ROADMAP](./16_ROADMAP.md).
-3. **Sistem upload sudah selesai** dan berjalan lokal (bukan Supabase Storage), tapi pipeline setelahnya (OCR → AI Summary) baru desain, belum diimplementasikan. Lihat [08_DOCUMENT_PIPELINE](./08_DOCUMENT_PIPELINE.md).
+1. **Supabase untuk Auth + counter rate-limit AI.** Sempat ada rencana memindahkan seluruh data aplikasi (task, kategori, dll) ke Supabase — rencana itu **dibatalkan**; semua data aplikasi tetap lokal. Satu pengecualian sempit sejak Milestone B: tabel `ai_usage_log` (angka counter, bukan konten). Lihat [04_AUTHENTICATION](./04_AUTHENTICATION.md) dan [05_DATABASE](./05_DATABASE.md).
+2. **Fitur AI penuh (Summary/Flashcard/Quiz/Recommendation + AI Assistant) sudah jadi** (Milestone A–E), memakai Google Gemini lewat provider modular. Default `AI_PROVIDER=mock` (rule-based/JSON palsu, tanpa biaya); set `AI_PROVIDER=gemini` + `GEMINI_API_KEY` untuk AI sungguhan. Semua pemanggilan AI ber-auth + rate-limit + cache. Lihat `AI_ARCHITECTURE_FREEZE.md` dan [16_ROADMAP](./16_ROADMAP.md).
+3. **Pipeline dokumen lengkap dari upload sampai fitur AI**: upload → ekstraksi teks (OCR/parser, Sprint 2–3) → Summary/Flashcard/Quiz/Recommendation on-demand (Milestone A–E). Lihat [08_DOCUMENT_PIPELINE](./08_DOCUMENT_PIPELINE.md).
 
 Untuk riwayat perubahan besar secara kronologis, lihat [18_CHANGELOG](./18_CHANGELOG.md). Untuk perbandingan rencana lama vs keputusan final, lihat [16_ROADMAP](./16_ROADMAP.md).

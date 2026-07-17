@@ -6,9 +6,9 @@ Aplikasi produktivitas akademik untuk mahasiswa — kelola tugas kuliah, jadwal 
 
 | | |
 |---|---|
-| **Berjalan penuh** | Manajemen tugas, kalender, kategori, tema/dark-mode, autentikasi (Supabase Auth sungguhan), upload file lokal |
-| **Berjalan sebagian** | AI Assistant/Calendar Assistant (masih rule-based, bukan LLM), widget dashboard (pengaturan ada, belum terhubung ke Dashboard) |
-| **Belum dibuat** | OCR, AI Summary — baru interface/abstraksi, sengaja ditunda (lihat [16_ROADMAP](./16_ROADMAP.md)) |
+| **Berjalan penuh** | Manajemen tugas, kalender, kategori, tema/dark-mode, autentikasi (Supabase Auth sungguhan), upload file lokal, Document Processing Pipeline (OCR gambar via OCR.Space + parser lokal PDF/DOCX/DOC/XLS/XLSX/CSV/PPTX), **fitur AI penuh: Summary/Flashcard/Quiz/Recommendation per-dokumen + AI Assistant** (Gemini via provider modular, ber-auth + rate-limit + cache — Milestone A–E) |
+| **Berjalan sebagian** | Widget dashboard (pengaturan ada, belum terhubung ke Dashboard); achievement (data ada, belum ada unlock otomatis) |
+| **Belum dibuat** | Provider AI selain Gemini (OpenAI/Anthropic/OpenRouter masih stub). Parsing `.ppt` (PowerPoint lama) ditolak permanen — tidak ada library JS yang layak |
 | **Ditunda atas permintaan** | Evaluasi widget |
 
 Detail lengkap: [01_PROJECT_OVERVIEW](./01_PROJECT_OVERVIEW.md).
@@ -28,8 +28,8 @@ Rincian lengkap tiap dependency dan alasannya: [14_DEPENDENCIES](./14_DEPENDENCI
 - [Database](./05_DATABASE.md) — tabel aktif vs obsolete di Supabase
 - [State Management](./06_STATE_MANAGEMENT.md) — Zustand + localStorage + IndexedDB
 - [Upload System](./07_UPLOAD_SYSTEM.md) — drag&drop, validasi, penyimpanan lokal
-- [Document Pipeline](./08_DOCUMENT_PIPELINE.md) — alur Upload → OCR → AI Summary (sebagian future)
-- [API](./09_API.md) — dua route AI yang ada, kontraknya
+- [Document Pipeline](./08_DOCUMENT_PIPELINE.md) — alur Upload → Processor → OCR/Parser Lokal (selesai) → AI Summary (future)
+- [API](./09_API.md) — 2 route AI (rule-based) + 1 route Document Processing (sungguhan), kontraknya
 - [Components](./10_COMPONENTS.md) — komponen penting & pola yang dipakai
 - [Services](./11_SERVICES.md) — logika bisnis per domain
 - [Stores](./12_STORES.md) — isi lengkap Zustand store

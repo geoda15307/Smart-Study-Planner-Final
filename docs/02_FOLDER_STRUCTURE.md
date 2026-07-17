@@ -26,7 +26,7 @@ smart-study-planner-web/
 
 Setiap folder di sini = satu route. `page.tsx` = halaman, `route.ts` = API endpoint. Sebagian besar `page.tsx` adalah **wrapper tipis** yang cuma merender komponen dari `src/components/` di dalam `<AppShell>`. Detail per-route: [10_COMPONENTS](./10_COMPONENTS.md) (untuk halaman) dan [09_API](./09_API.md) (untuk `route.ts`).
 
-Route yang tidak dibungkus `<AppShell>` (jadi tidak butuh login): `src/app/auth/*`, `src/app/onboarding/`, dan `src/app/page.tsx` (root, cuma redirect ke `/auth/login`).
+Route yang tidak dibungkus `<AppShell>`: `src/app/auth/*` dan `src/app/page.tsx` (root, cuma redirect ke `/auth/login`) — keduanya memang tanpa login. `src/app/onboarding/` juga di luar `<AppShell>` tapi **tetap butuh login**: dia melakukan pengecekan auth-nya sendiri (tunggu hydration → cek `isAuthenticated` → redirect), pola yang sama seperti `AppShell`.
 
 ## `src/components/` — Komponen per domain
 
@@ -42,8 +42,8 @@ Logika stateful yang dipakai ulang lintas komponen: `useTheme` (sinkronisasi tem
 
 Dua folder ini sering disalahpahami sebagai hal yang sama. Bedanya:
 
-- **`src/lib/`** = infrastruktur/klien tingkat rendah, sering **server-only** atau murni teknis, tidak punya "pengetahuan domain". Contoh: `lib/supabase/*` (klien Supabase), `lib/indexedDb.ts` (wrapper IndexedDB generik), `lib/ai/*` (abstraksi provider AI — sengaja di sini karena harus server-side, lihat [15_SECURITY](./15_SECURITY.md)), `lib/upload/config.ts` (konfigurasi validasi file), `lib/data.ts` (data seed/demo).
-- **`src/services/`** = logika bisnis yang **memakai** `lib/` untuk melakukan sesuatu yang berarti bagi aplikasi. Contoh: `services/auth/authService.ts` (pakai `lib/supabase/client.ts` untuk login/register), `services/storage/storageService.ts` (pakai `lib/indexedDb.ts` untuk simpan file, plus fungsi export JSON/CSV), `services/ai/aiService.ts` (client-side, manggil API route internal), `services/ocr/types.ts` (baru interface, belum ada implementasi).
+- **`src/lib/`** = infrastruktur/klien tingkat rendah, sering **server-only** atau murni teknis, tidak punya "pengetahuan domain". Contoh: `lib/supabase/*` (klien Supabase), `lib/indexedDb.ts` (wrapper IndexedDB generik), `lib/ai/*` (abstraksi provider AI — sengaja di sini karena harus server-side, lihat [15_SECURITY](./15_SECURITY.md)), `lib/ocr/*` (abstraksi provider OCR, alasan sama), `lib/document/*` (Strategy Pattern processor Document Pipeline — pindah dari `services/` begitu `imageProcessor` mulai memanggil OCR, lihat [11_SERVICES](./11_SERVICES.md)), `lib/upload/config.ts` (konfigurasi validasi file), `lib/data.ts` (data seed/demo).
+- **`src/services/`** = logika bisnis yang **memakai** `lib/` untuk melakukan sesuatu yang berarti bagi aplikasi. Contoh: `services/auth/authService.ts` (pakai `lib/supabase/client.ts` untuk login/register), `services/storage/storageService.ts` (pakai `lib/indexedDb.ts` untuk simpan file, plus fungsi export JSON/CSV), `services/ai/aiService.ts` (client-side, manggil API route internal), `services/document/*` (orchestrator `documentService.ts` client-side + `documentRepository.ts` berbasis IndexedDB — keduanya wajib client-only, beda alasan dari `lib/document/*` yang wajib server-only).
 
 Detail lengkap: [11_SERVICES](./11_SERVICES.md).
 

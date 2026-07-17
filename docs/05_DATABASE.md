@@ -9,6 +9,7 @@
 | Kategori | Tabel | Status |
 |---|---|---|
 | **Masih dipakai** | `profiles` | ✅ Aktif — diisi otomatis lewat trigger saat register, dibaca saat login |
+| **Infrastruktur AI (baru, Milestone B)** | `ai_usage_log` | ✅ Skema ada (RLS aktif, kosong) — counter rate-limit AI per user/hari. **Belum dipanggil route manapun** sampai Milestone D. Pengecualian sempit & terdokumentasi dari "Supabase hanya untuk auth" — lihat di bawah dan [04_AUTHENTICATION](./04_AUTHENTICATION.md) |
 | **Obsolete** (ada, RLS aktif, tapi kosong & tidak dipakai kode manapun) | `courses`, `categories`, `tasks`, `subtasks`, `class_schedules`, `study_sessions`, `preferences`, `widget_preferences`, `achievements`, `chat_messages` | ⚠️ Tidak dihapus — lihat alasan di bawah |
 
 **Tidak ada satupun tabel yang dihapus dalam dokumentasi ini** — sesuai arahan, ini murni pencatatan kondisi, bukan pembersihan.
@@ -47,11 +48,22 @@ Dibuat saat rencana awal adalah "pindahkan semua data ke Supabase" (lihat [16_RO
 
 **Rekomendasi (belum dieksekusi):** tabel-tabel ini kandidat untuk di-*drop* karena kehadirannya berisiko membingungkan developer baru ("kenapa ada tabel tasks kalau datanya di localStorage?"). Ini operasi database yang merusak (destructive) — sengaja tidak dieksekusi tanpa persetujuan eksplisit. Lihat [17_TECH_DEBT](./17_TECH_DEBT.md).
 
+## `ai_usage_log` — counter rate-limit AI (Milestone B)
+
+| Kolom | Tipe | Catatan |
+|---|---|---|
+| `user_id` | uuid | FK ke `auth.users.id` (`on delete cascade`), bagian PK |
+| `usage_date` | date | Bucket harian (bukan timestamp presisi), bagian PK |
+| `request_count` | integer | Default `0`, dinaikkan tiap kali salah satu route `/api/ai/*` lolos auth+rate-limit dan akan memanggil provider (Milestone D) |
+
+PK gabungan `(user_id, usage_date)` = satu baris counter per user per hari (pola upsert). RLS aktif dengan policy `select`/`insert`/`update` untuk baris milik sendiri (`(select auth.uid()) = user_id`) — **sengaja tanpa policy `DELETE`**: penghapusan ditolak by-default, mencegah user mengosongkan counter untuk mengelak dari batas harian. **Kenapa ini bukan pelanggaran Pasal 1 (Supabase hanya untuk auth):** yang disimpan murni ANGKA penghitung terikat identitas auth — bukan konten AI. Seluruh konten AI (`AISummary`/`AIFlashcardSet`/`AIQuizSet`/`AIRecommendation`) tetap 100% di IndexedDB. Detail desain: `AI_ARCHITECTURE_FREEZE.md` §7.4.
+
 ## Migration yang sudah diterapkan
 
-1. `smart_study_planner_initial_schema` — membuat 11 tabel di atas + RLS + trigger `handle_new_user`.
+1. `smart_study_planner_initial_schema` — membuat 11 tabel + RLS + trigger `handle_new_user`.
 2. `harden_functions_and_optimize_rls` — perbaikan hasil temuan Supabase security/performance advisor: kunci `search_path` pada function, cabut akses publik ke function `SECURITY DEFINER`, optimasi 12 RLS policy (`auth.uid()` dibungkus `(select ...)` supaya dievaluasi sekali per query, bukan per baris).
 3. `handle_new_user_include_profile_fields` — memperluas trigger supaya juga mengisi `university`/`major`/`semester` dari metadata signup.
+4. `add_ai_usage_log` (Milestone B, 17 Juli 2026) — membuat tabel `ai_usage_log` + RLS (`select`/`insert`/`update` own, tanpa `DELETE`). Additive; tidak menyentuh tabel lain. Advisor security/performance diverifikasi bersih untuk tabel ini setelah migrasi (tidak ada `auth_rls_initplan` karena `(select auth.uid())` sudah dipakai sejak awal).
 
 TypeScript types hasil generate dari skema ini ada di `src/lib/supabase/database.types.ts` — **harus di-generate ulang manual** kalau skema berubah (tidak otomatis sinkron). Lihat [13_CONFIGURATION](./13_CONFIGURATION.md).
 

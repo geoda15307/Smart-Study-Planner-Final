@@ -15,6 +15,8 @@
 
 Ini bukan detail implementasi — ini adalah **kontrak arsitektur** yang harus dipatuhi setiap kali menambah fitur baru. Kalau tergoda menyimpan sesuatu ke Supabase di luar auth/profil, itu tandanya salah arah.
 
+> **Satu pengecualian sempit & terdokumentasi (sejak Milestone B, 17 Juli 2026):** tabel `ai_usage_log` di Supabase menyimpan **counter rate-limit AI** per user per hari (`user_id`, `usage_date`, `request_count`) — lihat [05_DATABASE](./05_DATABASE.md) dan `AI_ARCHITECTURE_FREEZE.md` §7.4. Ini **bukan pembatalan** kontrak di atas: yang disimpan murni ANGKA penghitung yang terikat langsung ke identitas auth (yang memang tanggung jawab Supabase di project ini), bukan konten aplikasi. Seluruh **konten** AI (ringkasan, flashcard, quiz, rekomendasi) tetap 100% di IndexedDB — tidak pernah masuk Supabase. Rate-limiting yang benar butuh state server yang bertahan lintas cold start/instance serverless, yang tidak bisa dilakukan IndexedDB (tidak ada di server). Tabelnya dibuat di Milestone B dan **sejak Milestone D sudah aktif dipanggil** — `guardAIRoute()` membaca+menaikkan counter di keempat route `/api/ai/{summary,flashcard,quiz,recommendation}` (lihat [09_API](./09_API.md), [15_SECURITY](./15_SECURITY.md)).
+
 ## Sebelumnya: mock, sekarang: sungguhan
 
 Sebelum ini, "login" cuma menyimpan token palsu (`mock-jwt-${Date.now()}`) ke localStorage, tanpa validasi sungguhan — email apapun diterima. Ini sudah diganti total dengan Supabase Auth sungguhan. Konsekuensi nyata yang perlu diketahui:

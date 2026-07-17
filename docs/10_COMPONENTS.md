@@ -24,9 +24,19 @@ Juga memegang dua array navigasi: `appRoutes` (sidebar desktop + menu penuh mobi
 
 **File:** `src/components/category/CategoryIcon.tsx`. Menerima `category.icon` sebagai **string** (misalnya `"graduation-cap"`) dan mengubahnya jadi komponen Lucide React secara dinamis: split by `-`/`_`/spasi → PascalCase → cari di object `lucide-react`. Kalau tidak ketemu (nama salah, atau memang emoji lama), fallback ke ikon default (`❔`). Ini kenapa menambah kategori baru dengan `icon` string yang salah ketik **tidak error**, cuma tampil fallback — penting diketahui saat debug "kenapa icon kategori ini tidak muncul".
 
+## Panel AI per-dokumen (Milestone E)
+
+**`src/components/ai/`** — UI fitur AI, muncul di halaman **Dokumen** (`/upload`) di dalam `UploadFileItem`, **hanya** untuk dokumen yang teksnya berhasil diekstrak (`DocumentRecord.status === "completed"`).
+
+- `AIDocumentPanel.tsx` — kontainer per-dokumen. Tombol "Buat Ringkasan AI" (generate on-demand, bukan otomatis saat upload — hemat token, §11 freeze), menampilkan ringkasan (title/summary/keyPoints/keywords/difficulty/dll), lalu tab Flashcard/Quiz/Rekomendasi. Tombol "Generate ulang ringkasan".
+- `AIFlashcardView.tsx` / `AIQuizView.tsx` / `AIRecommendationView.tsx` — tiap view: load hasil cache dari `aiRepository` saat mount, generate on-demand via service Milestone D, deteksi **stale** (kalau `summaryId` tak cocok summary aktif → badge "sumber berubah" + generate ulang). Quiz interaktif (pilih opsi → kunci + tampilkan benar/salah + penjelasan + skor). Recommendation: tombol "Tambahkan ke Tugas"/"Tambahkan ke Kalender" per item → `addTask`/`addStudySession` dengan `sourceDocumentId`+`sourceSuggestionId`, lalu menandai saran `applied` (dipersist balik ke `aiRepository`).
+- `AIStates.tsx` — potongan UI bersama (`AILoading`/`AIError`/`AIStaleNote`).
+
+Semua memanggil **service Milestone D** (`services/ai/*Service.ts`) — tidak menduplikasi logika bisnis (cache/chunking/validasi ada di backend). Detail alur & kontrak: [11_SERVICES](./11_SERVICES.md), [09_API](./09_API.md), `AI_ARCHITECTURE_FREEZE.md` §11.
+
 ## `ChatWindow` & `CalendarView`
 
-**`src/components/ai/ChatWindow.tsx`** — UI chat AI Assistant, termasuk tombol quick-prompt. Memanggil `services/ai/aiService.ts` → `/api/ai/chat` (rule-based, lihat [09_API](./09_API.md)).
+**`src/components/ai/ChatWindow.tsx`** — UI chat AI Assistant, termasuk tombol quick-prompt. Memanggil `services/ai/aiService.ts` → `/api/ai/chat` yang (sejak Milestone E) menyambung ke `getAIProvider().chat()` sungguhan (Gemini bila aktif; mock rule-based bila default). Komponen ini **tidak berubah** — kontrak input/output route dijaga sama. Lihat [09_API](./09_API.md).
 
 **`src/components/calendar/CalendarView.tsx`** — kalender bulanan, menandai tanggal dengan deadline task (titik warna sesuai prioritas).
 

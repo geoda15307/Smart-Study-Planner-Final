@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Difficulty, Priority, Subtask, TaskInput } from "@/types";
 import { useAppStore } from "@/store/useAppStore";
 import { Button } from "@/components/common/Button";
@@ -14,6 +14,9 @@ import { nowISO, todayISO } from "@/utils/date";
 
 export function TaskForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const dateFromCalendar = searchParams.get("date");
+  const sourcePage = searchParams.get("from");
   const categories = useAppStore((state) => state.categories);
   const addTask = useAppStore((state) => state.addTask);
   const updateTask = useAppStore((state) => state.updateTask);
@@ -24,7 +27,7 @@ export function TaskForm() {
     description: "",
     activity: defaultActivity,
     categoryId: defaultCategory?.id ?? "",
-    deadlineDate: todayISO(),
+    deadlineDate: dateFromCalendar || todayISO(),
     deadlineTime: "23:59",
     priority: "Medium",
     difficulty: "Medium",
@@ -110,7 +113,12 @@ export function TaskForm() {
       }
     }
 
-    router.push(withAI ? `/tasks/${task.id}` : "/tasks");
+    if (withAI) {
+      router.push(`/tasks/${task.id}`);
+      return;
+    }
+
+    router.push(sourcePage === "calendar" ? "/calendar" : "/tasks");
   }
 
   return (

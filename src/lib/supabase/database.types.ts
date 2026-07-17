@@ -50,6 +50,24 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_usage_log: {
+        Row: {
+          request_count: number
+          usage_date: string
+          user_id: string
+        }
+        Insert: {
+          request_count?: number
+          usage_date: string
+          user_id: string
+        }
+        Update: {
+          request_count?: number
+          usage_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           activities: string[]

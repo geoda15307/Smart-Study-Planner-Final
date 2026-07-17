@@ -1,35 +1,36 @@
 import { NextResponse } from "next/server";
 import type { ChatMessage, Task } from "@/types";
-import { sortTasks } from "@/utils/date";
+import { requireAIAuth, aiError } from "@/lib/ai/guard";
+import { getAIProvider } from "@/lib/ai/getAIProvider";
+import { AIProviderError } from "@/lib/ai/errors";
 
+// POST /api/ai/chat — AI Assistant. Milestone E: disambungkan ke provider sungguhan lewat
+// getAIProvider().chat(). Logika rule-based lama dipindah ke mock.chat() (dipakai saat
+// AI_PROVIDER=mock), jadi default tetap membantu tanpa biaya. Gerbang auth wajib (route bisa
+// memanggil provider berbayar) — tanpa rate-limit harian: chat murah & sering (§16 E).
 export async function POST(request: Request) {
+  const guard = await requireAIAuth();
+  if (!guard.ok) return guard.response;
+
+  let body: { message?: string; tasks?: Task[]; history?: ChatMessage[] };
   try {
-    const body = (await request.json()) as { message?: string; tasks?: Task[]; history?: ChatMessage[] };
-    const message = body.message?.toLowerCase() ?? "";
-    const tasks = body.tasks ?? [];
-    const active = sortTasks(tasks).filter((task) => task.status !== "Selesai");
-    const topTask = active[0];
-
-    let reply = "Aku bisa bantu menyusun prioritas, jadwal belajar, ringkasan tugas, dan tips akademik.";
-
-    if (message.includes("mana") || message.includes("prioritas") || message.includes("dulu")) {
-      reply = topTask
-        ? `Prioritas utama saat ini adalah “${topTask.title}”.\n\nAlasannya:\n- Priority score: ${topTask.priorityScore}/100\n- Deadline: ${topTask.deadlineDate} ${topTask.deadlineTime}\n- Difficulty: ${topTask.difficulty}\n\nSaran: mulai dengan membaca instruksi, pecah menjadi subtask, lalu kerjakan bagian tersulit terlebih dahulu.`
-        : "Tidak ada task aktif. Kamu bisa review materi atau menyusun rencana minggu depan.";
-    } else if (message.includes("jadwal")) {
-      reply = topTask
-        ? `Rencana belajar hari ini:\n\n1. 19.00-19.15: Review instruksi “${topTask.title}”\n2. 19.15-20.15: Kerjakan bagian utama\n3. 20.15-20.30: Istirahat\n4. 20.30-21.00: Rapikan hasil dan catat bagian yang belum selesai`
-        : "Belum ada task aktif untuk dibuatkan jadwal.";
-    } else if (message.includes("ringkas")) {
-      reply = topTask
-        ? `Ringkasan task terdekat:\n\n${topTask.title}: ${topTask.description || "Belum ada deskripsi detail."}\n\nChecklist:\n- Pahami output tugas\n- Siapkan referensi\n- Kerjakan draft\n- Review dan submit`
-        : "Tidak ada task aktif yang bisa diringkas.";
-    } else if (message.includes("tips")) {
-      reply = "Tips agar deadline tidak terlambat:\n\n- Kerjakan task dengan deadline terdekat dulu.\n- Pecah task besar menjadi sesi 45-90 menit.\n- Sisakan minimal 1 sesi untuk review.\n- Mulai dari bagian paling kecil selama 10 menit.";
-    }
-
-    return NextResponse.json({ reply });
+    body = (await request.json()) as { message?: string; tasks?: Task[]; history?: ChatMessage[] };
   } catch {
-    return NextResponse.json({ message: "AI sedang sibuk. Silakan coba lagi." }, { status: 500 });
+    return aiError(400, "BAD_REQUEST", "Body request tidak valid.");
+  }
+
+  const message = typeof body.message === "string" ? body.message.trim() : "";
+  if (!message) return aiError(400, "BAD_REQUEST", "Pesan tidak boleh kosong.");
+  const tasks = Array.isArray(body.tasks) ? body.tasks : [];
+  const history = Array.isArray(body.history) ? body.history : [];
+
+  try {
+    const reply = await getAIProvider().chat(message, tasks, history);
+    return NextResponse.json({ reply });
+  } catch (error) {
+    if (error instanceof AIProviderError && error.code === "RATE_LIMIT") {
+      return aiError(429, "PROVIDER_RATE_LIMIT", "Provider AI sedang sibuk. Coba lagi sebentar.");
+    }
+    return aiError(502, "AI_CHAT_FAILED", "AI sedang tidak bisa menjawab. Coba lagi.");
   }
 }
